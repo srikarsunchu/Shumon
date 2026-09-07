@@ -34,3 +34,30 @@
   color: #a9b2b7;
   background: #05070a;
 }
+
+.game-brand,.game-entry,.game-controls,.pause-button,.touch-controls { position:absolute; z-index:2; color:#eee9dc; }
+.game-brand { top:32px; left:40px; display:flex; align-items:center; gap:14px; font:12px/1.2 system-ui,sans-serif; letter-spacing:.24em; pointer-events:none; }
+.brand-mark { display:grid; place-items:center; width:30px; height:36px; background:#913f33; font:23px/1 Georgia,serif; }
+.game-entry { inset:0; background:linear-gradient(90deg,rgba(3,9,13,.86),rgba(3,9,13,.38) 42%,transparent 75%); display:flex; align-items:center; padding:80px 8vw; box-sizing:border-box; }
+.entry-content { max-width:470px; }
+.eyebrow { font:12px/1.5 system-ui,sans-serif; letter-spacing:.3em; color:#c0b6a0; }
+.game-entry h1 { font:clamp(64px,8.6vw,132px)/.88 Georgia,serif; letter-spacing:-.055em; font-weight:400; margin:28px 0; }
+.game-entry h1 em { font-weight:400; color:#c9b898; }
+.entry-rule { width:44px; height:2px; background:#a65040; margin:30px 0; }
+.entry-description { font:17px/1.8 Georgia,serif; color:#cecbbf; }
+.enter-button { display:flex; align-items:center; justify-content:space-between; gap:44px; margin-top:30px; padding:17px 20px; min-width:245px; border:1px solid #bbaa8970; color:#f0eadb; background:#b8a18112; font:14px system-ui,sans-serif; cursor:pointer; }
+.enter-button:hover { background:#b8a18130; border-color:#ccb994; }
+.enter-button:disabled { opacity:.5; cursor:wait; }
+.entry-hint { max-width:360px; font:12px/1.8 system-ui,sans-serif; color:#b0b6b4; margin-top:20px; }
+.edition { position:absolute; bottom:30px; right:40px; font:12px system-ui,sans-serif; letter-spacing:.2em; color:#b0b6b4; }
+.pause-button { top:32px; right:32px; background:#09101490; border:1px solid #ffffff30; padding:10px 14px; font:14px system-ui,sans-serif; cursor:pointer; }
+.game-controls { bottom:28px; left:50%; transform:translateX(-50%); display:flex; gap:24px; white-space:nowrap; background:#071015b0; padding:14px 22px; border-top:1px solid #bbaa8940; font:12px system-ui,sans-serif; }
+kbd { font:inherit; color:#eddfc4; margin-right:6px; }
+button:focus-visible { outline:2px solid #eddfc4; outline-offset:5px; }
+.touch-controls { display:none; }
+@media(max-width:700px) { .game-brand { top:24px; left:24px; } .game-entry { padding:85px 26px; } .game-entry h1 { font-size:80px; } .edition { right:24px; bottom:20px; } .game-controls { gap:12px; font-size:12px; white-space:normal; width:85%; flex-wrap:wrap; justify-content:center; } }
+@media(hover:none) { .game-controls { display:none; } .touch-controls { display:flex; bottom:35px; left:20px; right:20px; align-items:end; justify-content:space-between; } .touch-controls button { background:#0b141bb0; color:#f0eadb; border:1px solid #cdbd9960; min-width:48px; min-height:48px; touch-action:none; font-size:18px; } .touch-move { display:grid; grid-template-columns:repeat(3,48px); gap:5px; } .touch-move button:first-child { grid-column:2; } .touch-move button:nth-child(2) { grid-column:1; } }
+@media(max-height:650px) { .game-entry h1 { font-size:66px; margin:16px 0; } .entry-rule { margin:16px 0; } .entry-description { margin:10px 0; } .enter-button { margin-top:16px; } .entry-hint { margin-top:12px; } }
+
+.sound-button {position:absolute;z-index:3;top:32px;right:158px;background:#09101490;color:#eee9dc;border:1px solid #ffffff30;padding:10px 14px;font:14px system-ui,sans-serif;cursor:pointer;}
+@media(max-width:700px){.sound-button{top:78px;right:32px;}}

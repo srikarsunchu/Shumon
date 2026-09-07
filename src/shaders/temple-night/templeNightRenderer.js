@@ -4,8 +4,11 @@
 /* Exact included world sections SHA-256: b95f0f2d7824af6890e4f4a779376aa3ad75d7fdf01a70c742f3241c9970160d */
 /* Deliberately excluded: HTML page UI, chapter card viewports, cloth cards, generated page images, and the subset-font wordmark. */
 import * as THREE from "three";
+import { buildLandscape } from "./templeLandscape.js";
 
-export function createTempleNightRenderer(canvas) {
+// Gameplay extension hooks are local; authored world construction remains intact.
+export function createTempleNightRenderer(canvas, createGameplay) {
+let gameplay, landscape;
 /* ------------------------------------------------------------ 0 · basics */
 const Q      = new URLSearchParams(location.search);
 const qs     = (k, d) => { const v = Q.get(k); return v === null ? d : v; };
@@ -1967,6 +1970,7 @@ function updateLeaves(dt) {
   for (let i = 0; i < L.length; i++) {
     const l = L[i];
     l.y -= l.fall * dt;
+    if (landscape) { l.x += landscape.wind.strength.value * .9 * dt; l.z += landscape.wind.strength.value * .35 * dt; }
     l.roll += l.rollSp * dt;
     l.tilt += l.spin * dt;
     if (seed || l.y < cy - 10) {                /* back to the top of the band */
@@ -2214,7 +2218,7 @@ function initPost() {
   POST.comp = new THREE.ShaderMaterial({
     uniforms: {
       tS: { value: null }, tB: { value: null }, uRes: { value: new THREE.Vector2(w, h) },
-      uT: { value: 0 }, uBloom: { value: .34 }, uCA: { value: 1 }, uGrain: { value: .020 },
+      uT: { value: 0 }, uBloom: { value: .34 }, uCA: { value: 1 }, uGrain: { value: .003 },
       uVig: { value: 1 }, uExp: { value: .62 }, uFade: { value: 1 }, uSat: { value: 1.05 }
     },
     vertexShader: QUAD_VS,
@@ -2395,6 +2399,7 @@ function updateWorld(dt) {
     m.material.opacity = a;
     m.visible = a > .006;
   });
+  landscape?.update(clock, gameplay?.position);
   updateLeaves(dt);
   updateWisps(dt);
 }
@@ -2421,6 +2426,7 @@ let fadeIn = 1;
 function renderFrame(now) {
   if (disposed) return;
   const raw = tPrev ? (now - tPrev) / 1000 : 0;
+  gameplay?.recordFrame(raw);
   const dt = Math.min(raw, .05);
   tPrev = now;
   clock += dt;
@@ -2440,7 +2446,7 @@ function renderFrame(now) {
   RIG.intro = 1;
   RIG.mx = damp(RIG.mx, RIG.tmx, 2.6, dt);
   RIG.my = damp(RIG.my, RIG.tmy, 2.6, dt);
-  applyCamera();
+  if (gameplay) gameplay.update(dt); else applyCamera();
   updateWorld(dt);
   render();
 }
@@ -2459,6 +2465,7 @@ function disposeMaterial(material, textures) {
 function dispose() {
   if (disposed) return;
   disposed = true;
+  gameplay?.dispose();
   const geometries = new Set();
   const materials = new Set();
   const textures = new Set();
@@ -2501,16 +2508,20 @@ try {
   buildMaple(71, 12.6, -13.0, 1.05); buildMaple(72, -11.8, -9.4, .95);
   buildMaple(73, 9.2, -19.0, .82);   buildMaple(74, -14.5, -17.5, 1.0);
   buildMaple(75, 16.5, -6.0, .88);
-  buildForeground();
+  WORLD.fg = []; // Flat foreground artwork is replaced by explorable geometry.
+  landscape = buildLandscape(scene, LOW);
+  WORLD.sky.visible = false;
   buildAtmosphere();
   buildLeafFall();
   buildWisps();
+  if (createGameplay && WISP.mesh) WISP.mesh.visible = false;
   initPost();
+  gameplay = createGameplay?.({ scene, camera, canvas, wind: landscape.wind });
   WORLD.fg.forEach(m => m.layers.set(1));
   if (WORLD.rain) WORLD.rain.layers.set(1);
   if (WORLD.leaves) WORLD.leaves.mesh.layers.set(1);
   WORLD.ripples.forEach(r => r.layers.set(1));
-  if (WANT_SHADOW && WORLD.key) { WORLD.key.shadow.autoUpdate = false; WORLD.key.shadow.needsUpdate = true; }
+  if (WANT_SHADOW && WORLD.key) { WORLD.key.shadow.autoUpdate = true; WORLD.key.shadow.needsUpdate = true; }
   RIG.intro = 1;
   fadeIn = 1;
   resize();
@@ -2526,7 +2537,8 @@ try {
 return {
   render: renderFrame,
   resize,
-  reducedMotion: REDUCE,
+  reducedMotion: REDUCE && !gameplay,
+  gameplay,
   setPointer(x, y, inside = true) {
     RIG.tmx = inside ? clamp(x, -1, 1) : 0;
     RIG.tmy = inside ? clamp(y, -1, 1) : 0;

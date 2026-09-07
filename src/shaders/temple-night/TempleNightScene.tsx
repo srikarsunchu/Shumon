@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { registerGameTools } from "./templeAgentControls.js";
+import { createTempleGameplay } from "./templeGameplay.js";
 import { createTempleNightRenderer } from "./templeNightRenderer.js";
 
 /* In the original library this scene also fronted three sibling worlds
@@ -17,6 +19,11 @@ export function TempleNightScene({ className = "" }: TempleNightSceneProps) {
 }
 
 function TempleNightWorld({ className = "" }: { className?: string }) {
+  const gameRef = useRef<ReturnType<typeof createTempleGameplay> | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const [sound, setSound] = useState(false);
+  const [drawn, setDrawn] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
@@ -27,9 +34,20 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     const canvas = canvasRef.current;
     if (!host || !canvas) return undefined;
 
+    let unregisterTools = () => {};
+    let ready = false;
+    let mounted = true;
     let renderer: ReturnType<typeof createTempleNightRenderer>;
     try {
-      renderer = createTempleNightRenderer(canvas);
+      renderer = createTempleNightRenderer(canvas, createTempleGameplay);
+      gameRef.current = renderer.gameplay;
+      unregisterTools = registerGameTools(renderer.gameplay);
+      Promise.all([renderer.gameplay?.ready, renderer.gameplay?.animationReady]).then(() => { if(mounted) ready=true; }).catch(error => {
+        if(mounted){setErrorMessage(error instanceof Error ? error.message : "World initialization failed");setState("unavailable");}
+      });
+      renderer.gameplay?.subscribe((status: { active: boolean; drawn: boolean; sound: boolean }) => {
+        setPlaying(status.active); setDrawn(status.drawn); setSound(status.sound);
+      });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unknown renderer error");
       setState("unavailable");
@@ -53,7 +71,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     const render = (time: number) => {
       frame = 0;
       renderer.render(time);
-      if (!rendered) {
+      if (!rendered && ready) {
         rendered = true;
         setState("ready");
       }
@@ -111,6 +129,8 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     resize();
 
     return () => {
+      unregisterTools();
+      mounted = false;
       disposed = true;
       if (frame) cancelAnimationFrame(frame);
       resizeObserver.disconnect();
@@ -121,6 +141,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
       window.removeEventListener("blur", clearPointer);
       document.removeEventListener("visibilitychange", onVisibility);
       renderer.dispose();
+      gameRef.current = null;
     };
   }, []);
 
@@ -129,10 +150,32 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
       <canvas
         ref={canvasRef}
         className={`temple-night-canvas${state === "ready" ? " is-ready" : ""}`}
-        aria-label="Interactive Kage mountain temple world after dark"
+        aria-label="Temple Night playable mountain temple"
       />
+      {state !== "unavailable" && <>
+        <div className="game-brand"><span className="brand-mark" aria-hidden="true">月</span><span>TEMPLE NIGHT</span></div>
+        {playing ? <>
+          <button className="sound-button" aria-pressed={sound} onClick={() => gameRef.current?.toggleSound()}>Sound {sound ? "on" : "off"} <kbd>M</kbd></button>
+          <button className="pause-button" onClick={() => gameRef.current?.pause()}>Pause <kbd>Esc</kbd></button>
+          <div className="game-controls"><span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span><span>Mouse · Look</span><span><kbd>Click / Space</kbd> Swing</span><span><kbd>E</kbd> {drawn ? "Sheathe" : "Draw"}</span></div>
+          <div className="touch-controls">
+            <div className="touch-move">{[["KeyW","↑"],["KeyA","←"],["KeyS","↓"],["KeyD","→"]].map(([key,label]) => <button key={key} aria-label={`Move ${key.slice(-1)}`} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); gameRef.current?.setKey(key,true); }} onPointerUp={() => gameRef.current?.setKey(key,false)} onPointerCancel={() => gameRef.current?.setKey(key,false)}>{label}</button>)}</div>
+            <button onClick={() => gameRef.current?.attack()}>Swing</button>
+          </div>
+        </> : <div className="game-entry">
+          <div className="entry-content">
+            <p className="eyebrow">A NIGHT TO WANDER</p>
+            <h1>Temple<br/><em>Night</em></h1>
+            <div className="entry-rule" />
+            <p className="entry-description">Rain on stone. Wind in the maples.<br/>Nowhere you need to be.</p>
+            <button className="enter-button" disabled={state !== "ready"} onClick={() => { setEntered(true); gameRef.current?.start(); }}>{state !== "ready" ? "Gathering the night…" : entered ? "Return to the night" : "Enter the grounds"}<span aria-hidden="true">↗</span></button>
+            <p className="entry-hint">WASD to wander · Mouse to look · Click to swing<br/>If mouse capture is unavailable, drag with the right button to look.</p>
+          </div>
+          <span className="edition">PLAYABLE STUDY · 002</span>
+        </div>}
+      </>}
       {state === "unavailable" ? (
-        <p className="temple-night-unavailable" role="status">WebGL is unavailable: {errorMessage || "unsupported context"}.</p>
+        <p className="temple-night-unavailable" role="status">The world could not load: {errorMessage || "unsupported context"}.</p>
       ) : null}
     </div>
   );
