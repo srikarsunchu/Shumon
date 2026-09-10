@@ -249,3 +249,12 @@ the page ever mentions loading.
 19. https://developer.chrome.com/blog/web-audio-autoplay · https://developer.chrome.com/blog/autoplay/
 20. https://developer.mozilla.org/en-US/docs/Web/API/Pointer_Lock_API
 21. https://www.gamedeveloper.com/design/game-design-rules-loading-screens
+
+## Journey revision
+
+Title input now fades onto free roaming on the woodland approach. The initial
+chapter card is deferred until the player reaches the court. Arrival holds
+movement for 4.2 seconds, including the existing cut/card/fade, before wave
+one begins. Victory's Enter action is Continue, returning to exploration;
+the palace double doors open on approach. Death's Enter action starts a new
+journey. The starting route now extends to z=80 within a z=90 boundary.

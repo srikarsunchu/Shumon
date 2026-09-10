@@ -39,7 +39,7 @@ export const intro = {
   },
   death: { title: "THE GATE FALLS", stats: (w: number, t: string) => `wave ${w} · ${t}` },
   victory: { title: "THE NIGHT PASSES", stats: (w: number, t: string, p: number) => `${w} waves · ${t} · ${p} perfect` },
-  endcard: { again: "ENTER — AGAIN", title: "ESC — TITLE" },
+  endcard: { continue: "ENTER — CONTINUE", again: "ENTER — AGAIN", title: "ESC — TITLE" },
   sound: { on: "SOUND ON", off: "SOUND OFF" },
   unavailable: (why: string) => `The night could not load: ${why || "unsupported context"}.`,
 } as const;

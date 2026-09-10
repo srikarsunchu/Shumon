@@ -4,11 +4,11 @@ import * as THREE from 'three';
    blood moon's red rim and the lanterns' 0xff5a24. Albedos are kept low —
    at this exposure anything above ~0.12 starts to read as daylight.
 
-   Playable area (matched by templePhysics.js): |x| < 52, -66 < z < 42.
+   Playable area (matched by templePhysics.js): |x| < 52, -66 < z < 90.
    Beyond it the ground climbs into a ring of trees and rock, then a dark
    treeline band closes the horizon against the fog. */
 const FOG = 0x050a0e;
-const PLAY = { x: 52, zNear: 42, zFar: -66 };
+const PLAY = { x: 52, zNear: 90, zFar: -66 };
 
 export function terrainHeight(x,z) {
   const ax=Math.abs(x);
@@ -33,7 +33,7 @@ function pathAmount(x,z) {
   if(z<-9)return 0;
   const d=Math.abs(x-pathCentre(z)),w=pathHalfWidth(z);
   /* (smoothstep needs min < max: written as 1 - rising edge) */
-  return (1-THREE.MathUtils.smoothstep(d,w-.5,w+1.3))*(1-THREE.MathUtils.smoothstep(z,46,60));
+  return (1-THREE.MathUtils.smoothstep(d,w-.5,w+1.3))*(1-THREE.MathUtils.smoothstep(z,84,90));
 }
 
 /* sky: 'sky' is the renderer's authored plane (stars, cloud, valley glow); its
@@ -68,8 +68,8 @@ function buildTreeline(scene, rnd) {
     const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,depthWrite:false,fog:false}));
     m.renderOrder=1; m.userData.noCollision=true; m.frustumCulled=false; scene.add(m);
   };
-  build(104,9.5,0x06090d,1.7);
-  build(92,6.5,0x0a1015,4.1);
+  build(152,9.5,0x06090d,1.7);
+  build(140,6.5,0x0a1015,4.1);
 }
 
 export function buildLandscape(scene, low=false, sky=null) {
@@ -82,7 +82,7 @@ export function buildLandscape(scene, low=false, sky=null) {
      on purpose: in this pipeline (moon key 1.22 + 0.52, exposure .62, gamma)
      a flat 0x0d1816 already displays at ~85/255; 0x040806 sits around 40,
      which is where the court's wet stone lives. */
-  const terrain=new THREE.PlaneGeometry(164,176,132,142); terrain.rotateX(-Math.PI/2); terrain.translate(0,0,-11);
+  const terrain=new THREE.PlaneGeometry(164,230,132,184); terrain.rotateX(-Math.PI/2); terrain.translate(0,0,10);
   const p=terrain.attributes.position,colors=[];
   const ground=new THREE.Color(0x040806),moss=new THREE.Color(0x050803),pathC=new THREE.Color(0x1c1712),c=new THREE.Color();
   for(let i=0;i<p.count;i++) {
@@ -139,7 +139,7 @@ export function buildLandscape(scene, low=false, sky=null) {
   for(let i=0;i<count*12 && n<count;i++) {
     /* two thirds of the blades go where the player walks, the rest thin out
        toward the ring */
-    const near=rnd()<.75, x=(rnd()-.5)*(near?90:130), z=near?rnd()*90-44:rnd()*134-78;
+    const near=rnd()<.75, x=(rnd()-.5)*(near?90:130), z=near?rnd()*144-44:rnd()*180-78;
     if((Math.abs(x)<12 && z<16) || (Math.abs(x)<22 && z < -32)) continue;
     if(pathAmount(x,z)>.15) continue;
     // Broad clumps and bare pockets, with small gaps around each root.

@@ -367,3 +367,43 @@ console.log('PASS: all 16 stance matchups deal the correct damage and stagger; o
   game.dispose();
 }
 console.log('PASS: returning to title clears enemies, hides the player, and resets the physical spawn.');
+
+/* Journey: walking buys the encounter, victory returns to exploration. */
+{
+  const {game}=await world({journey:true});game.start();
+  assert.equal(game.getState().phase,'roam');assert.equal(game.getState().enemies.length,0);
+  game.setKey('KeyW',true);game.setKey('ShiftLeft',true);
+  until(game,s=>s.phase==='arrival',1200,'court arrival');
+  game.setKey('KeyW',false);game.setKey('ShiftLeft',false);
+  assert.equal(game.getState().enemies.length,0,'no enemies during arrival cutscene');
+  game.pause();step(game,300);assert.equal(game.getState().phase,'arrival','pause freezes the cutscene');
+  game.start();until(game,s=>s.phase==='standoff',300,'first standoff');
+  for(let wave=1;wave<=3;wave++) {
+    game.setKey('KeyW',true);step(game,2);game.setKey('KeyW',false);
+    step(game,250);for(const enemy of game.enemies.living())enemy.kill();step(game,2);
+    if(wave<3)until(game,s=>s.phase==='standoff' && s.wave===wave+1,240,'next wave');
+  }
+  assert.equal(game.getState().phase,'victory');game.continueExploring();step(game,300);
+  assert.equal(game.getState().phase,'roam');assert.equal(game.getState().enemies.length,0);
+  game.dispose();
+}
+console.log('PASS: journey arrival pauses correctly and the completed encounter returns to free roam once.');
+
+/* Real Rapier collision through the palace's hollow shell and double doorway. */
+{
+  const {buildPalace}=await import('../src/shaders/temple-night/templePalace.js');
+  const {createTemplePhysics}=await import('../src/shaders/temple-night/templePhysics.js');
+  const scene=new THREE.Scene(),temple=new THREE.Group();scene.add(temple);
+  const core=new THREE.Mesh(new THREE.BoxGeometry(13.6,5,8.2),mat);core.position.set(0,9.5,-44);temple.add(core);
+  const podium=new THREE.Mesh(new THREE.BoxGeometry(42,7,24),mat);podium.position.set(0,3.5,-45);scene.add(podium);
+  const palace=buildPalace(scene,{temple});scene.updateMatrixWorld(true);
+  const solids=[];scene.traverse(o=>{if(o.isMesh&&!o.userData.noCollision&&o.material.isMeshStandardMaterial)solids.push(o);});
+  const pos=new THREE.Vector3(0,7.2,-37),physics=await createTemplePhysics(solids,pos);
+  palace.update(1,pos);assert(palace.doors.every(d=>Math.abs(d.hinge.rotation.y)>1),'both leaves open on approach');
+  for(let i=0;i<240;i++)physics.move(0,-2/60,1/60,pos);
+  assert(pos.z<-44,'walk through front doors into hall');assert(pos.y>7,'interior has a solid floor');
+  for(let i=0;i<240;i++)physics.move(0,-2/60,1/60,pos);
+  assert(pos.z>-48,'rear wall prevents leaving the shell');
+  physics.dispose();
+}
+console.log('PASS: palace doors open and its physical doorway, floor, and rear wall are navigable.');

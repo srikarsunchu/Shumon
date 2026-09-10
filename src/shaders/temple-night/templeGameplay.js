@@ -49,7 +49,7 @@ export const BANNERS = {
 /* `clips` (name → clip JSON) seeds the pose clips without fetching, for tests;
    `random` and `standoffFlinchAt` (seconds after the lead enemy takes its
    mark) pin the run down for tests */
-export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips, random = Math.random, standoffFlinchAt }) {
+export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips, random = Math.random, standoffFlinchAt, journey = false }) {
   scene.updateMatrixWorld(true);
   const solids = [];
   scene.traverse(o => {
@@ -80,6 +80,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
   /* the run */
   let gamePhase='title', wave=0, health=PLAYER_HEALTH, hitFlash=0, guardHeld=false, guardBlend=0, parryAt=-Infinity, dodgeT=0, hitReact=0, deadT=-1;
   let standoff=null, standoffLead=null, standoffAt=-1, flinchDelay=0, flinchTime=-1, standoffLinger=-1, lunge=null, killPending=null;
+  let arrivalTime=0, encounterDone=false;
   let banner=null, result=null, seconds=0, perfects=0, pending=[], clearUntil=-1, practice=false, mouseAt=-Infinity, emitAt=-1, swingTarget=null;
   const hitThisSwing=new Set();
 
@@ -156,13 +157,14 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
 
   /* ---- the run ---- */
   function beginRun(practiceMode) {
-    position.set(0,.02,7); physics?.reset(position); resetInput();
+    position.set(journey?-1.5:0,journey?1.02:.02,journey?80:7); physics?.reset(position); resetInput();
+    arrivalTime=0; encounterDone=false;
     yaw=0; pitch=.22; cameraReady=false; stance='stone'; drawn=false; drawTime=0;
     player.rotation.set(0,0,0); player.position.copy(position);
     pool.clear(); practice=practiceMode; wave=0; health=PLAYER_HEALTH; hitFlash=0; perfects=0; seconds=0; result=null; standoff=null; standoffLead=null;
     banner=null; pending=[]; lunge=null; killPending=null; deadT=-1; dodgeT=0; hitReact=0; guardHeld=false; parryAt=-Infinity; swingTarget=null;
     player.rotation.x=0; player.rotation.z=0; swing=0; queuedAttack=false;
-    if(practice) gamePhase='fight'; else nextWave();
+    if(practice) gamePhase='fight'; else if(journey) gamePhase='roam'; else nextWave();
   }
   function nextWave() {
     wave++; gamePhase='standoff'; standoff={holding:false,flinched:false,result:null}; standoffAt=-1; flinchTime=-1; standoffLinger=-1; lunge=null; killPending=null;
@@ -255,7 +257,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     if(!e.repeat && e.code === 'Space') { if(inStandoff()) holdStandoff(true); else attack(); }
     if(!e.repeat && e.code === 'KeyF') guard(true);
     if(!e.repeat && e.code === 'KeyQ') dodge();
-    if(!e.repeat && e.code === 'Enter' && (gamePhase==='dead' || gamePhase==='victory')) restart();
+    if(!journey && !e.repeat && e.code === 'Enter' && (gamePhase==='dead' || gamePhase==='victory')) restart();
     if(!e.repeat && e.code === 'KeyM') toggleSound();
     if(!e.repeat && /^Digit[1-4]$/.test(e.code)) setStance(STANCES[Number(e.code[5])-1]);
     if(e.code === 'Escape') pause();
@@ -301,7 +303,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     const dead=gamePhase==='dead';
     const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
     const right=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
-    const moving=active && !dead && !lunge && (forward !== 0 || right !== 0);
+    const moving=active && gamePhase!=='arrival' && !dead && !lunge && (forward !== 0 || right !== 0);
     const run=keys.has('ShiftLeft')||keys.has('ShiftRight');
     const cutting = swing > .15;
     const topSpeed = (cutting ? .65 : drawn ? (run ? 4.4 : 2.4) : (run ? 5.6 : 2.8))*(hitReact>0?.4:1);
@@ -322,7 +324,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
       if(d>CUT_REACH-.2 && lunge.t<.6) velocity.set(e.position.x-position.x,0,e.position.z-position.z).normalize().multiplyScalar(9);
       else { velocity.set(0,0,0); player.rotation.y=yawTo(e); lunge=null; beginSwing(); killPending=e; }
     }
-    if(velocity.lengthSq()<.0004 || !active) velocity.set(0,0,0);
+    if(velocity.lengthSq()<.0004 || !active || gamePhase==='arrival') velocity.set(0,0,0);
     previous.copy(position);
     if(active && physics) {
       physics.move(velocity.x*dt,velocity.z*dt,dt,position);
@@ -356,6 +358,13 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
       swing=Math.max(0,swing-dt);drawTime=Math.max(0,drawTime-dt);time+=dt;
       if(gamePhase!=='title') seconds+=dt;
       hitFlash=Math.max(0,hitFlash-dt*2); dodgeT=Math.max(0,dodgeT-dt); hitReact=Math.max(0,hitReact-dt); if(deadT>=0)deadT+=dt;
+      if(gamePhase==='roam' && !encounterDone && Math.abs(position.x)<8 && position.z<10 && position.z>-10) {
+        gamePhase='arrival'; arrivalTime=0; resetInput(); emit();
+      }
+      if(gamePhase==='arrival') {
+        arrivalTime+=dt; yaw=0; pitch=.22;
+        if(arrivalTime>=4.2) { position.set(0,.02,7);physics?.reset(position);player.rotation.y=0;cameraReady=false;nextWave(); }
+      }
       /* the post grade follows the fight: a hit dips the exposure, a standoff
          (and the end cards) deepen the vignette */
       if(grade){ grade.hit=hitFlash; const want=inStandoff()?1:(gamePhase==='dead'||gamePhase==='victory')?.6:0; grade.standoff+= (want-grade.standoff)*(1-Math.exp(-4*dt)); }
@@ -455,7 +464,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     let vertex=0;for(let i=1;i<bladePoints.length;i++)for(const point of [bladePoints[i-1][0],bladePoints[i-1][1],bladePoints[i][0],bladePoints[i][0],bladePoints[i-1][1],bladePoints[i][1]])point.toArray(trailPositions,vertex++*3);
     trailGeometry.setDrawRange(0,vertex);trailGeometry.attributes.position.needsUpdate=true;
     audio.update(wind?.strength.value ?? .7);
-    audio.ambience?.({rain:wind?.strength.value ?? .7,insects:fighting()?.25:1});
+    audio.ambience?.({rain:position.y>6 && position.z<-39 && Math.abs(position.x)<15 ? 0 : wind?.strength.value ?? .7,insects:fighting()?.25:1});
 
     // A damped look target absorbs stair risers. Mouse orbit remains responsive;
     // the small shoulder offset keeps the character out of the path ahead.
@@ -473,7 +482,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     cameraTarget.y=THREE.MathUtils.damp(cameraTarget.y,target.y,8,dt);
     const sprint=clamp((gaitSpeed-2.8)/2.8,0,1);
     desired.set(Math.sin(cameraYaw)*Math.cos(cameraPitch),.16+Math.sin(cameraPitch),Math.cos(cameraYaw)*Math.cos(cameraPitch)).normalize();
-    let safeDistance=5.6+sprint*.55;
+    let safeDistance=position.y>6 && position.z<-38 && Math.abs(position.x)<15 ? 2.2 : 5.6+sprint*.55;
     // Probe a small camera volume, not only its centre, to protect near edges.
     for(const [horizontal,vertical] of [[0,0],[.20,0],[-.20,0],[0,.16],[0,-.16]]) {
       probeOrigin.copy(cameraTarget).addScaledVector(cameraRight,horizontal); probeOrigin.y+=vertical;
@@ -503,7 +512,8 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
          re-request pointer lock: it is a no-op unless the run is over */
       if(active && !fresh) return;
       if(fresh) beginRun(!!options.practice); active=true;audio.setActive(true); startedAt=performance.now(); resetInput(); emit(); const result=canvas.requestPointerLock?.(); result?.catch?.(()=>{}); },
-    returnToTitle() { pause(); beginRun(true); practice=false; gamePhase="title"; emit(); },
+    continueExploring() { if(gamePhase!=='victory')return; pool.clear();encounterDone=true;gamePhase='roam';drawn=false;drawTime=0;resetInput();active=true;audio.setActive(true);emit();const lock=canvas.requestPointerLock?.();lock?.catch?.(()=>{}); },
+    returnToTitle() { pause(); beginRun(true); practice=false; gamePhase="title";position.set(0,.02,7);physics?.reset(position);cameraReady=false; emit(); },
     pause, restart, attack, holdStandoff, guard, parry, dodge, toggleSword, setStance,
     /* a fighter on demand, for practice and tests */
     spawnEnemy(type,options){ return pool.spawn(type,options); },

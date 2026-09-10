@@ -3,7 +3,7 @@ import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { terrainHeight } from './templeLandscape.js';
 
 // Art-directed foreground kit. All dimensions are metres; the central duel lane stays clear.
-export const GROVES=[[-15,5,1.15],[-21,-2,.9],[17,10,1.05],[24,2,.9],[-18,24,1.1],[14,29,1.2],[-29,15,.9],[29,21,1.1],[-33,3,1.3],[34,-5,1.35],[-28,32,1.1],[28,34,1.2]];
+export const GROVES=[[-15,5,1.15],[-21,-2,.9],[17,10,1.05],[24,2,.9],[-18,24,1.1],[14,29,1.2],[-29,15,.9],[29,21,1.1],[-33,3,1.3],[34,-5,1.35],[-28,32,1.1],[28,34,1.2],[-7,46,1.1],[8,51,1.3],[-6,63,1.15],[7,69,1.25],[-8,80,1.1],[8,85,1.2]];
 export const PUDDLES=[[-4,2,1.8,.8],[4,-3,1.4,.65],[2,11,1.1,.6],[-6,-6,1.2,.7],[7,7,1.5,.6]];
 export function buildEnvironment(scene,world,post,low=false) {
   let seed=821;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return(seed>>>0)/4294967296;};
@@ -42,7 +42,7 @@ export function buildEnvironment(scene,world,post,low=false) {
   const branch=(a,b,r0,r1)=>{const delta=b.clone().sub(a);const m=add(new THREE.CylinderGeometry(r1,r0,delta.length(),9,3),bark,...a.clone().add(b).multiplyScalar(.5).toArray());m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());return m;};
   const leafGeometry=new THREE.BufferGeometry();leafGeometry.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,-.13,.02,.11,-.24,.01,.08,-.13,.03,.23,0,.025,.4,.13,.03,.23,.24,.01,.08,.13,.02,.11],3));leafGeometry.setIndex([0,1,2,0,2,3,0,3,4,0,4,5,0,5,6,0,6,7]);leafGeometry.computeVertexNormals();
   const leafMat=new THREE.MeshStandardMaterial({color:0x74483c,roughness:.95,side:THREE.DoubleSide});
-  const leaves=new THREE.InstancedMesh(leafGeometry,leafMat,low?4800:9600);leaves.userData.noCollision=true;leaves.castShadow=true;kit.add(leaves);const dummy=new THREE.Object3D();let leafN=0;
+  const leaves=new THREE.InstancedMesh(leafGeometry,leafMat,low?7200:14400);leaves.userData.noCollision=true;leaves.castShadow=true;kit.add(leaves);const dummy=new THREE.Object3D();let leafN=0;
   function foliage(x,y,z,r,count){for(let j=0;j<count && leafN<leaves.instanceMatrix.count;j++){const a=rnd()*Math.PI*2,d=Math.sqrt(rnd())*r;dummy.position.set(x+Math.cos(a)*d,y+(rnd()-.5)*.7,z+Math.sin(a)*d);dummy.rotation.set(rnd()*.8,rnd()*6,.2+rnd()*.7);dummy.scale.setScalar(.8+rnd()*.9);dummy.updateMatrix();leaves.setMatrixAt(leafN,dummy.matrix);leaves.setColorAt(leafN++,new THREE.Color().setHSL(.025+rnd()*.06,.25+rnd()*.25,.16+rnd()*.13));}}
   GROVES.forEach(([x,z,s],i)=>{
     const y=terrainHeight(x,z),base=new THREE.Vector3(x,y,z),top=new THREE.Vector3(x+(i%2?-.8:.9)*s,y+5.4*s,z+.25);

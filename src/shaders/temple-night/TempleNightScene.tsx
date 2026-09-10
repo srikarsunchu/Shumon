@@ -18,7 +18,7 @@ export type TempleNightSceneProps = {
 /* The state shape from docs/GAME.md. Every field is optional here because
    the gameplay track lands in pieces; the UI degrades to the pre-contract
    behaviour (title ↔ playing) when a field is missing. */
-type Phase = "title" | "standoff" | "fight" | "clear" | "dead" | "victory";
+type Phase = "roam" | "arrival" | "title" | "standoff" | "fight" | "clear" | "dead" | "victory";
 type Enemy = { id: number; type: EnemyType; health: number; maxHealth: number; alive: boolean; attacking?: boolean; staggered?: boolean; distance?: number };
 export type GameStatus = {
   active?: boolean;
@@ -48,6 +48,7 @@ type Gameplay = {
   start?: (options?: { restart?: boolean }) => void;
   pause?: () => void;
   returnToTitle?: () => void;
+  continueExploring?: () => void;
   restart?: (options?: { restart?: boolean }) => void;
   attack?: () => void;
   holdStandoff?: (down: boolean) => void;
@@ -443,7 +444,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     setFightReached(false);
     setWaveCard(null);
     setHint(null);
-    setMachine("cut");
+    setMachine(now?.phase === "roam" ? "fade" : "cut");
   }, []);
 
   const again = useCallback(() => {
@@ -452,6 +453,8 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     firstRun.current = false;
     begin();
   }, [begin]);
+
+  const continueJourney = useCallback(() => { gameRef.current?.continueExploring?.(); setMachine("fade"); }, []);
 
   const toTitle = useCallback(() => {
     gameRef.current?.returnToTitle?.();
@@ -521,7 +524,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
   /* ---- in play: what the contract's state means on screen ---- */
   const phase: Phase = status.phase ?? (status.active ? "fight" : "title");
   const inPlay = mode === "play";
-  const paused = inPlay && status.active === false && (phase === "standoff" || phase === "fight" || phase === "clear");
+  const paused = inPlay && status.active === false && (phase === "roam" || phase === "arrival" || phase === "standoff" || phase === "fight" || phase === "clear");
   const wave = status.wave ?? 0;
   const waves = status.waves ?? 3;
 
@@ -532,6 +535,8 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     const m = machineRef.current;
     if (livePhase === "title" && (m === "cut" || m === "chapter" || m === "fade" || m === "play" || m === "dying" || m === "won")) { clearTimers(); setMachine("title"); }
   }, [livePhase, clearTimers]);
+
+  useEffect(() => { if(phase === "arrival") setMachine("cut"); }, [phase]);
 
   /* death and victory beats */
   useEffect(() => {
@@ -545,14 +550,14 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     if (mode !== "death" && mode !== "victory") return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
-      if (e.code === "Enter") { e.preventDefault(); again(); }
+      if (e.code === "Enter") { e.preventDefault(); if(mode === "victory") continueJourney(); else again(); }
       else if (e.code === "Escape") toTitle();
       else if (e.code === "KeyM") flashSound();
     };
     window.addEventListener("keydown", onKey);
     const idle = window.setTimeout(toTitle, T.endIdle);
     return () => { window.removeEventListener("keydown", onKey); window.clearTimeout(idle); };
-  }, [mode, again, toTitle, flashSound]);
+  }, [mode, again, continueJourney, toTitle, flashSound]);
 
   /* pause: a click (or Enter) is the gesture pointer lock needs; a tab hidden
      for a minute while paused returns to the title */
@@ -769,7 +774,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
               <div className="tn-hair" aria-hidden="true" />
               <p className="tn-card-line">{mode === "death" ? copy.death.stats(Math.max(1, wave), formatTime(seconds)) : copy.victory.stats(waves, formatTime(seconds), status.result?.perfect ?? 0)}</p>
               <div className="tn-card-actions">
-                <button className="tn-line" onClick={again}>{copy.endcard.again}</button>
+                <button className="tn-line" onClick={mode === "victory" ? continueJourney : again}>{mode === "victory" ? copy.endcard.continue : copy.endcard.again}</button>
                 <button className="tn-line" onClick={toTitle}>{copy.endcard.title}</button>
               </div>
             </div>

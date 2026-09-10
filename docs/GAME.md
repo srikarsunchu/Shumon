@@ -152,3 +152,20 @@ All geometry and textures are generated locally; there are no new downloads.
 Returning to title clears the enemy pool, hides the player, and resets camera,
 stance, and physics to the starting view. Restart also resets the physical
 spawn instead of retaining the previous run's position.
+
+## Journey and palace
+
+The browser game starts in `roam` at the woodland path (z=80), with no enemies.
+Entering the central court (|x|<8, z<10) triggers `arrival`: a short chapter
+cutscene that settles the player at the duel mark. After 4.2 seconds the
+existing three-wave standoff sequence starts. These phases are part of the
+state contract and support pause/resume. The standalone combat test harness
+can opt out with `journey:false`.
+
+Victory offers Continue: the player returns to `roam` with the encounter
+completed, can ascend the temple steps and enter through two proximity-opening
+front doors. The ground floor contains a central tatami reception hall, an
+armour room and a writing room. Doors are visual moving leaves; their approach
+zone opens them before the player crosses the static doorway. Interiors have
+solid walls and an open doorway, not a solid exterior block. A closer camera
+is used inside. Restart begins a new journey; the encounter triggers once.
