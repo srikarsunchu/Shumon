@@ -18,9 +18,12 @@ export type TempleNightSceneProps = {
 /* The state shape from docs/GAME.md. Every field is optional here because
    the gameplay track lands in pieces; the UI degrades to the pre-contract
    behaviour (title ↔ playing) when a field is missing. */
-type Phase = "roam" | "arrival" | "title" | "standoff" | "fight" | "clear" | "dead" | "victory";
-type Enemy = { id: number; type: EnemyType; health: number; maxHealth: number; alive: boolean; attacking?: boolean; staggered?: boolean; distance?: number };
+type Phase = "ceremony" | "ending" | "complete" | "roam" | "arrival" | "title" | "standoff" | "fight" | "clear" | "dead" | "victory";
+type Enemy = { stance?: string; id: number; type: EnemyType; health: number; maxHealth: number; alive: boolean; attacking?: boolean; staggered?: boolean; distance?: number };
 export type GameStatus = {
+  story?: string | null;
+  storyTime?: number;
+  interaction?: boolean;
   active?: boolean;
   phase?: Phase;
   wave?: number;
@@ -49,6 +52,7 @@ type Gameplay = {
   pause?: () => void;
   returnToTitle?: () => void;
   continueExploring?: () => void;
+  interact?: () => void;
   restart?: (options?: { restart?: boolean }) => void;
   attack?: () => void;
   holdStandoff?: (down: boolean) => void;
@@ -524,7 +528,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
   /* ---- in play: what the contract's state means on screen ---- */
   const phase: Phase = status.phase ?? (status.active ? "fight" : "title");
   const inPlay = mode === "play";
-  const paused = inPlay && status.active === false && (phase === "roam" || phase === "arrival" || phase === "standoff" || phase === "fight" || phase === "clear");
+  const paused = inPlay && status.active === false && (phase === "ceremony" || phase === "ending" || phase === "roam" || phase === "arrival" || phase === "standoff" || phase === "fight" || phase === "clear");
   const wave = status.wave ?? 0;
   const waves = status.waves ?? 3;
 
@@ -542,7 +546,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
   useEffect(() => {
     if (machineRef.current !== "play") return;
     if (phase === "dead") setMachine("dying");
-    if (phase === "victory") setMachine("won");
+    if (phase === "victory" || phase === "complete") setMachine("won");
   }, [phase]);
 
   /* end cards: Enter again, Esc or 30 s idle → title; M still toggles sound */
@@ -550,7 +554,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
     if (mode !== "death" && mode !== "victory") return undefined;
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat) return;
-      if (e.code === "Enter") { e.preventDefault(); if(mode === "victory") continueJourney(); else again(); }
+      if (e.code === "Enter") { e.preventDefault(); if(mode === "victory" && statusRef.current.phase!=="complete") continueJourney(); else again(); }
       else if (e.code === "Escape") toTitle();
       else if (e.code === "KeyM") flashSound();
     };
@@ -644,10 +648,10 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
 
   const stance = (STANCES.includes(status.stance as StanceName) ? status.stance : "stone") as StanceName;
   const target = status.enemies?.find(e => e.id === status.target && e.alive) ?? null;
-  const wantedStance = target ? STANCES.find(s => copy.stances[s].beats === target.type) ?? null : null;
+  const wantedStance = target?.type === "master" ? target.stance : target ? STANCES.find(s => copy.stances[s].beats === target.type) ?? null : null;
   const health = clamp01((status.health ?? 100) / (status.maxHealth ?? 100));
   const hitFlash = inPlay ? clamp01(status.hitFlash ?? 0) : 0;
-  const letterbox = (phase === "standoff" && (mode === "chapter" || mode === "fade" || mode === "play")) || mode === "won";
+  const letterbox = phase === "ceremony" || phase === "ending" || (phase === "standoff" && (mode === "chapter" || mode === "fade" || mode === "play")) || mode === "won";
   const black: "on" | "off" = mode === "boot" || mode === "loading" || mode === "cut" || mode === "chapter" || mode === "dying" || mode === "death" || mode === "won" || mode === "victory" ? "on" : "off";
   const brandOn = mode === "title" || mode === "toTitle" || mode === "death" || mode === "victory" || paused;
   const card = mock?.ui?.card ?? waveCardShown;
@@ -669,6 +673,15 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
         <div className={`tn-letterbox tn-letterbox-top${letterbox ? " is-on" : ""}`} aria-hidden="true" />
         <div className={`tn-letterbox tn-letterbox-bottom${letterbox ? " is-on" : ""}`} aria-hidden="true" />
 
+        {inPlay && !paused && status.story && <div className="tn-story" aria-live="polite">
+          {status.story === "approach" && (status.seconds ?? 0)<8 && <p>{copy.story.approach}</p>}
+          {status.story === "palace" && <p>{copy.story.palace}</p>}
+          {status.story === "invitation" && <><p>{copy.story.invitation}</p>{status.interaction ? <button onClick={() => gameRef.current?.interact?.()}>{copy.story.take}</button> : <small>{copy.story.find}</small>}</>}
+          {(status.story === "release" || status.story === "rest") && <p>{copy.story.release}</p>}
+          {status.story === "departure" && <p>{copy.story.departure}</p>}
+          {status.story === "challenger" && <p>{(status.storyTime ?? 0)<3.5 ? copy.story.challenger : copy.story.bow}</p>}
+        </div>}
+
         {/* guard / parry: a thin ring while the window is open, rules while guarding */}
         <div className={`tn-ring${inPlay && status.parryWindow ? " is-on" : ""}`} aria-hidden="true" />
         <div className={`tn-guard${inPlay && status.guarding ? " is-on" : ""}`} aria-hidden="true" />
@@ -676,11 +689,11 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
         {hudOn && (
           <div className={`tn-hud${awake ? " is-awake" : ""}`} aria-live="off">
             <div className="tn-hud-corner tn-hud-tr">
-              <div className="tn-wave">{copy.hud.wave(Math.max(1, wave), waves)}</div>
+              <div className="tn-wave">{status.story === "duel" ? copy.story.duel : copy.hud.wave(Math.max(1, wave), waves)}</div>
               {target && (
                 <div className="tn-target">
                   <div className="tn-rule tn-rule-target"><span style={{ transform: `scaleX(${clamp01(target.health / (target.maxHealth || 1))})` }} /></div>
-                  <div className="tn-target-name">{copy.enemies[target.type] ?? target.type}</div>
+                  <div className="tn-target-name">{copy.enemies[target.type] ?? target.type}{target.type === "master" && <div className="tn-master-form">{copy.story.counter(target.stance ?? "stone")}</div>}</div>
                 </div>
               )}
             </div>
@@ -768,13 +781,13 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
         )}
 
         {(mode === "death" || mode === "victory") && (
-          <div className="tn-card tn-end" role="dialog" aria-label={mode === "death" ? copy.death.title : copy.victory.title}>
+          <div className="tn-card tn-end" role="dialog" aria-label={mode === "death" ? copy.death.title : phase === "complete" ? copy.title.name : copy.victory.title}>
             <div className="tn-card-body">
-              <h2 className="tn-card-title">{mode === "death" ? copy.death.title : copy.victory.title}</h2>
+              <h2 className="tn-card-title">{mode === "death" ? copy.death.title : phase === "complete" ? copy.title.name : copy.victory.title}</h2>
               <div className="tn-hair" aria-hidden="true" />
-              <p className="tn-card-line">{mode === "death" ? copy.death.stats(Math.max(1, wave), formatTime(seconds)) : copy.victory.stats(waves, formatTime(seconds), status.result?.perfect ?? 0)}</p>
+              <p className="tn-card-line">{mode === "death" ? copy.death.stats(Math.max(1, wave), formatTime(seconds)) : phase === "complete" ? copy.story.ending : copy.victory.stats(waves, formatTime(seconds), status.result?.perfect ?? 0)}</p>
               <div className="tn-card-actions">
-                <button className="tn-line" onClick={mode === "victory" ? continueJourney : again}>{mode === "victory" ? copy.endcard.continue : copy.endcard.again}</button>
+                <button className="tn-line" onClick={mode === "victory" && phase !== "complete" ? continueJourney : again}>{phase === "complete" ? copy.story.replay : mode === "victory" ? copy.endcard.continue : copy.endcard.again}</button>
                 <button className="tn-line" onClick={toTitle}>{copy.endcard.title}</button>
               </div>
             </div>

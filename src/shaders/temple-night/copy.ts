@@ -4,7 +4,7 @@
    Night in identifiers and class names. */
 
 export type StanceName = "stone" | "water" | "wind" | "moon";
-export type EnemyType = "swordsman" | "shieldman" | "spearman" | "brute";
+export type EnemyType = "swordsman" | "shieldman" | "spearman" | "brute" | "master";
 
 /* The entry sequence, docs/INTRO.md §3. Caps for cards and hints; no
    welcome; no explanation of who the player is or why enemies come; a kanji
@@ -34,7 +34,7 @@ export const intro = {
     controls: [
       ["W A S D", "Move"], ["Shift", "Run"], ["Mouse", "Look"],
       ["Click / Space", "Cut"], ["F", "Guard · Parry"], ["Q", "Dodge"],
-      ["E", "Draw · Sheathe"], ["1 2 3 4", "石 水 風 月"], ["M", "Sound"],
+      ["E", "Draw · Sheathe"], ["R", "Take displayed sword"], ["1 2 3 4", "石 水 風 月"], ["M", "Sound"],
     ],
   },
   death: { title: "THE GATE FALLS", stats: (w: number, t: string) => `wave ${w} · ${t}` },
@@ -47,6 +47,21 @@ export const intro = {
 export const copy = {
   ...intro,
 
+  story: {
+    approach: "Defeat the guards. Challenge the master.",
+    palace: "The master awaits inside the palace.",
+    invitation: "Go on. Everyone chooses that one.",
+    take: "R — TAKE THE SWORD",
+    find: "Approach the sword beneath the hanging scroll.",
+    duel: "THE MASTER",
+    counter: (stance: string) => `${stance.toUpperCase()} FORM · MATCH HIS STANCE`,
+    release: "Ha. Finally.",
+    departure: "It's yours.",
+    challenger: "Through those doors. The master is inside.",
+    bow: "Master. I have come to challenge you.",
+    ending: "THE NEW MASTER",
+    replay: "ENTER — PLAY AGAIN",
+  },
   hud: {
     wave: (wave: number, waves: number) => `Wave ${wave} of ${waves}`,
     waveLabel: "Wave",
@@ -66,6 +81,7 @@ export const copy = {
     shieldman: "Shieldman",
     spearman: "Spearman",
     brute: "Brute",
+    master: "The Master",
   } as Record<EnemyType, string>,
 
   canvasLabel: "Shumon, The Vermilion Gate: a night duel on the temple grounds",

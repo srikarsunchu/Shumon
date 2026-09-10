@@ -17,7 +17,9 @@ function seeded(a) { return () => { a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>
 async function world(options={}) {
   const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(55);
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(120,120),mat); floor.rotation.x=-Math.PI/2; scene.add(floor);
-  const game=createTempleGameplay({scene,camera,canvas,random:seeded(7),standoffFlinchAt:2,...options});
+  let palace;
+  if(options.journey){for(let i=1;i<=35;i++){const stair=new THREE.Mesh(new THREE.BoxGeometry(12,i*.2,.65),mat);stair.position.set(0,i*.1,-17-i*.6);scene.add(stair);}const hall=new THREE.Mesh(new THREE.BoxGeometry(14,7,12),mat);hall.position.set(0,3.5,-44);scene.add(hall);const temple=new THREE.Group();scene.add(temple);palace=(await import('../src/shaders/temple-night/templePalace.js')).buildPalace(scene,{temple});}
+  const game=createTempleGameplay({scene,camera,canvas,palace,random:seeded(7),standoffFlinchAt:2,...options});
   await game.ready;
   return { game, scene, player: scene.getObjectByName('Playable wanderer') };
 }
@@ -370,7 +372,7 @@ console.log('PASS: returning to title clears enemies, hides the player, and rese
 
 /* Journey: walking buys the encounter, victory returns to exploration. */
 {
-  const {game}=await world({journey:true});game.start();
+  const {game,scene}=await world({journey:true});game.start();
   assert.equal(game.getState().phase,'roam');assert.equal(game.getState().enemies.length,0);
   game.setKey('KeyW',true);game.setKey('ShiftLeft',true);
   until(game,s=>s.phase==='arrival',1200,'court arrival');
@@ -383,11 +385,31 @@ console.log('PASS: returning to title clears enemies, hides the player, and rese
     step(game,250);for(const enemy of game.enemies.living())enemy.kill();step(game,2);
     if(wave<3)until(game,s=>s.phase==='standoff' && s.wave===wave+1,240,'next wave');
   }
-  assert.equal(game.getState().phase,'victory');game.continueExploring();step(game,300);
-  assert.equal(game.getState().phase,'roam');assert.equal(game.getState().enemies.length,0);
+  assert.equal(game.getState().phase,'roam');assert.equal(game.getState().story,'palace');
+  const master=game.enemies.living()[0];assert.equal(master.type,'master');
+  assert.equal(game.interact(),false,'cannot claim sword from the courtyard');
+  game.setKey('KeyW',true);game.setKey('ShiftLeft',true);
+  until(game,s=>s.story==='invitation',1800,'enter the palace');
+  until(game,s=>s.interaction,240,'reach the sword');
+  game.setKey('KeyW',false);game.setKey('ShiftLeft',false);
+  assert.equal(game.interact(),true);assert.equal(scene.getObjectByName('The master’s sword').visible,false);assert.equal(game.interact(),false,'claim only once');
+  game.pause();step(game,300);assert.equal(game.getState().story,'claim','pause freezes sword ceremony');
+  game.start();until(game,s=>s.story==='duel',200,'master duel');
+  assert.equal(game.getState().health,100,'final duel starts with full health');
+  game.guard(true);until(game,()=>master.stance!=='stone',600,'master changes form');game.guard(false);
+  game.setKey('KeyS',true);step(game,180);game.setKey('KeyS',false);
+  assert(game.position.z<=-40.7,'duel stays in the hall');
+  master.hit(1000);step(game,2);
+  assert(master.defeated && master.alive,'master yields rather than dying');
+  assert.equal(game.getState().phase,'ending');
+  game.pause();const t=game.getState().storyTime;step(game,120);assert.equal(game.getState().storyTime,t);
+  game.start();until(game,s=>s.story==='complete',2400,'departure, new challenger and ending');
+  assert.equal(game.getState().phase,'complete');assert.equal(game.getState().result.won,true);
+  assert.equal(game.enemies.living().length,2,'master and new challenger survive');
+  game.restart();assert.equal(scene.getObjectByName('The master’s sword').visible,true);assert.equal(scene.getObjectByName('Already packed travelling bag').parent.name,'Palace interior');assert.equal(game.getState().story,'approach');assert.equal(game.enemies.all.length,0);
   game.dispose();
 }
-console.log('PASS: journey arrival pauses correctly and the completed encounter returns to free roam once.');
+console.log('PASS: complete journey: palace invitation, sword claim, changing master, nonlethal ending, pause and replay.');
 
 /* Real Rapier collision through the palace's hollow shell and double doorway. */
 {
@@ -407,3 +429,13 @@ console.log('PASS: journey arrival pauses correctly and the completed encounter 
   physics.dispose();
 }
 console.log('PASS: palace doors open and its physical doorway, floor, and rear wall are navigable.');
+
+/* The master's current form, rather than his enemy type, controls the counter. */
+for(const form of ['stone','water','wind'])for(const stance of ['stone','water','wind','moon']) {
+  const {game,player}=await world();game.start({practice:true});game.setStance(stance);game.toggleSword();step(game,40);
+  const master=game.spawnEnemy('master',{x:player.position.x,z:player.position.z-1.4,standoff:true});master.stance=form;
+  game.attack();step(game,24);
+  near(240-master.health,34*(stance===form?1.6:1),1e-9,`${stance} against master ${form}`);
+  assert.equal(master.mode==='stagger',stance===form);game.dispose();
+}
+console.log('PASS: all twelve master-form counters deal the intended damage and stagger.');

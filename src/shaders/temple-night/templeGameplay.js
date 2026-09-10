@@ -49,7 +49,7 @@ export const BANNERS = {
 /* `clips` (name → clip JSON) seeds the pose clips without fetching, for tests;
    `random` and `standoffFlinchAt` (seconds after the lead enemy takes its
    mark) pin the run down for tests */
-export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips, random = Math.random, standoffFlinchAt, journey = false }) {
+export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips, random = Math.random, standoffFlinchAt, journey = false, palace = null }) {
   scene.updateMatrixWorld(true);
   const solids = [];
   scene.traverse(o => {
@@ -80,7 +80,8 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
   /* the run */
   let gamePhase='title', wave=0, health=PLAYER_HEALTH, hitFlash=0, guardHeld=false, guardBlend=0, parryAt=-Infinity, dodgeT=0, hitReact=0, deadT=-1;
   let standoff=null, standoffLead=null, standoffAt=-1, flinchDelay=0, flinchTime=-1, standoffLinger=-1, lunge=null, killPending=null;
-  let arrivalTime=0, encounterDone=false;
+  let arrivalTime=0, encounterDone=false, story='approach', storyTime=0, master=null, challenger=null, courtyardKills=0;
+  const cinematic=()=>gamePhase==='ceremony' || gamePhase==='ending' || gamePhase==='complete';
   let banner=null, result=null, seconds=0, perfects=0, pending=[], clearUntil=-1, practice=false, mouseAt=-Infinity, emitAt=-1, swingTarget=null;
   const hitThisSwing=new Set();
 
@@ -129,6 +130,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
   function getState() {
     const nearest=pool.nearest(position);
     return {
+      story:journey?story:null, storyTime, interaction:journey && story==='invitation' && Math.hypot(position.x,position.z+46.5)<2.1 && position.y>6,
       fps, active, phase:gamePhase, wave, waves:WAVES.length, health, maxHealth:PLAYER_HEALTH, hitFlash,
       guarding:guarding(), parryWindow:gamePhase==='fight' && pool.living().some(e=>{const h=e.hitIn();return h>0 && h<=PARRY_WINDOW;}), dodging:dodgeT>0,
       drawn, stance, enemies:pool.states(), target:nearest?nearest.id:null,
@@ -147,18 +149,19 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     /* a soft turn toward whoever is in front: the cut never spins the wanderer round */
     const near=pool.nearest(position); swingTarget=near && near.distance<3.2 && Math.abs(wrap(Math.atan2(-(near.position.x-position.x),-(near.position.z-position.z))-player.rotation.y))<=75*Math.PI/180 ? near : null; }
   function attack() {
+    if(cinematic())return;
     if(!active || swing > 0 || gamePhase==='dead' || hitReact>0 || dodgeT>0 || lunge || killPending || inStandoff()) return;
     if(drawTime>0)return;
     if(!drawn){drawTime=DRAW_TIME;audio.draw();queuedAttack=true;drawn=true;} else beginSwing();
     emit();
   }
-  function toggleSword() { if(active && swing <= 0 && drawTime<=0 && gamePhase!=='dead') { drawn = !drawn; drawTime=drawn?DRAW_TIME:sheatheTime(); audio.draw(); emit(); } }
+  function toggleSword() { if(!cinematic() && active && swing <= 0 && drawTime<=0 && gamePhase!=='dead') { drawn = !drawn; drawTime=drawn?DRAW_TIME:sheatheTime(); audio.draw(); emit(); } }
   function setStance(name) { if(!STANCES.includes(name))throw new Error(`Unknown stance: ${name}`); if(stance!==name){stance=name;emit();} return stance; }
 
   /* ---- the run ---- */
   function beginRun(practiceMode) {
     position.set(journey?-1.5:0,journey?1.02:.02,journey?80:7); physics?.reset(position); resetInput();
-    arrivalTime=0; encounterDone=false;
+    arrivalTime=0; encounterDone=false;story='approach';storyTime=0;master=null;challenger=null;courtyardKills=0;palace?.setClaimed(false);palace?.setStory('approach');
     yaw=0; pitch=.22; cameraReady=false; stance='stone'; drawn=false; drawTime=0;
     player.rotation.set(0,0,0); player.position.copy(position);
     pool.clear(); practice=practiceMode; wave=0; health=PLAYER_HEALTH; hitFlash=0; perfects=0; seconds=0; result=null; standoff=null; standoffLead=null;
@@ -200,18 +203,19 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
   }
   function parryEnemy(e) { e.stagger(); e.vulnerable=true; parryAt=-Infinity; audio.parry?.(); emit(); }
   function parry() {
-    if(!active || gamePhase==='dead')return;
+    if(!active || cinematic() || gamePhase==='dead')return;
     parryAt=time;
     const e=pool.living().find(o=>{const h=o.hitIn();return h>0 && h<=PARRY_WINDOW;});
     if(e) parryEnemy(e);
   }
   function guard(down) {
+    if(cinematic())return;
     guardHeld=!!down;
     if(down && active && gamePhase!=='dead') { if(!drawn && drawTime<=0 && swing<=0) toggleSword(); parry(); }
     emit();
   }
   function dodge() {
-    if(!active || dodgeT>0 || gamePhase==='dead' || hitReact>0 || lunge || killPending)return;
+    if(!active || cinematic() || dodgeT>0 || gamePhase==='dead' || hitReact>0 || lunge || killPending)return;
     skipStandoff();
     const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
     const right=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
@@ -241,18 +245,71 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     damagePlayer(e.spec.damage,{enemy:e});
   }
   function resolveCut(e) {
-    const match=STANCE_TARGET[stance]===e.type;
+    if(e.mode==='audience' || e.mode==='depart')return;
+    const match=e.type==='master'?stance===e.stance:STANCE_TARGET[stance]===e.type;
     if(e.type==='shieldman' && stance!=='water' && random()<ENEMY_TYPES.shieldman.block) { e.block(); audio.guard?.(); emit(); return; }
     const died=e.hit(CUT_DAMAGE*(match?STANCE_BONUS:1)*(e.vulnerable?2:1),{stagger:match});
-    if(died)audio.death?.(); else {audio.hit?.();if(match)audio.stagger?.();}
+    if(died && e.type!=='master')audio.death?.(); else {audio.hit?.();if(match)audio.stagger?.();}
     emit();
   }
+  function enterPalace() {
+    courtyardKills=pool.killed;encounterDone=true;gamePhase='roam';story='palace';storyTime=0;
+    health=PLAYER_HEALTH;drawn=false;swing=0;drawTime=0;resetInput();banner=null;
+    master=pool.spawn('master',{x:2.5,y:7.12,z:-46,passive:true,yaw:Math.PI});
+    master.bounds={minX:-5.7,maxX:5.7,minZ:-46,maxZ:-40.7};
+    // Wooden practice blade retains the captured sword animation and full fighter rig.
+    master.rig.katana.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.setHex(0x715039);o.material.metalness=0;o.material.roughness=.9;}});
+    emit();
+  }
+  function interact() {
+    if(!active || !getState().interaction)return false;
+    story='claim';storyTime=0;gamePhase='ceremony';resetInput();swing=0;guardHeld=false;dodgeT=0;
+    position.set(0,7.12,-45);physics?.reset(position);yaw=0;player.rotation.y=0;cameraReady=false;
+    drawn=true;drawTime=DRAW_TIME;palace?.setClaimed(true);audio.draw();emit();return true;
+  }
+  function finishDuel() {
+    story='release';storyTime=0;gamePhase='ending';resetInput();swing=0;drawTime=0;queuedAttack=false;drawn=false;guardHeld=false;hitReact=0;dodgeT=0;
+    position.set(-1.4,7.12,-43.8);physics?.reset(position);yaw=-Math.PI/2;player.rotation.y=yaw;cameraReady=false;
+    master.mode='audience';master.drawn=false;master.velocity.set(0,0,0);emit();
+  }
+  function updateStory(dt) {
+    storyTime+=dt;
+    if(story==='palace' && position.y>6 && position.z<-40 && Math.abs(position.x)<6.5){story='invitation';storyTime=0;emit();}
+    if(story==='claim' && storyTime>2.4){
+      story='duel';storyTime=0;gamePhase='fight';health=PLAYER_HEALTH;drawTime=0;drawn=true;
+      position.set(0,7.12,-41.8);physics?.reset(position);yaw=0;player.rotation.y=0;cameraReady=false;
+      master.position.set(0,7.12,-45);master.mode='circle';master.drawn=true;master.stanceTime=0;audio.bell?.();emit();
+    }
+    if(story==='release') {
+      // Walk to the bench, sit using the captured library, then get up with his bag.
+      master.mode='depart';master.destination=new THREE.Vector3(3.7,7.12,-45.7);
+      if(Math.hypot(master.position.x-master.destination.x,master.position.z-master.destination.z)<.2){master.position.copy(master.destination);story='rest';storyTime=0;master.mode='audience';master.velocity.set(0,0,0);emit();}
+    }
+    if(story==='rest'){
+      master.cinematicReact=storyTime<3.5?{clip:'Sitting_Enter',t:Math.min(1,storyTime/1.4)}:{clip:'Sitting_Exit',t:Math.min(1,(storyTime-3.5)/1.4)};
+      if(storyTime>5){master.cinematicReact=null;palace?.giveBag(master.rig);master.bounds=null;story='departure';storyTime=0;emit();}
+    }
+    if(story==='departure'){
+      master.mode='depart';master.destination=new THREE.Vector3(0,7.12,-38.3);
+      if(master.position.z>-39.5){master.group.visible=false;story='challenger';storyTime=0;
+        challenger=pool.spawn('swordsman',{x:0,y:7.12,z:-39.9,passive:true});challenger.mode='depart';challenger.destination=new THREE.Vector3(0,7.12,-41.7);
+        yaw=Math.PI;cameraReady=false;emit();}
+    }
+    if(story==='challenger'){
+      master.group.visible=false;
+      if(storyTime>3 && challenger){challenger.mode='audience';challenger.drawn=false;}
+      if(storyTime>8){story='complete';gamePhase='complete';result={won:true,kills:courtyardKills,seconds:Math.round(seconds),perfect:perfects};audio.victory?.();emit();}
+    }
+    palace?.setStory(story);
+  }
+
   function restart() { if(disposed)return; beginRun(false); if(!active && physics){active=true;audio.setActive(true);} emit(); }
 
   function keydown(e) {
     if (!active) return;
     if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','KeyE','KeyM','KeyF','KeyQ','Enter','Escape','Digit1','Digit2','Digit3','Digit4'].includes(e.code)) e.preventDefault();
     keys.add(e.code);
+    if(!e.repeat && e.code === 'KeyR') interact();
     if(!e.repeat && e.code === 'KeyE') toggleSword();
     if(!e.repeat && e.code === 'Space') { if(inStandoff()) holdStandoff(true); else attack(); }
     if(!e.repeat && e.code === 'KeyF') guard(true);
@@ -303,7 +360,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     const dead=gamePhase==='dead';
     const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
     const right=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
-    const moving=active && gamePhase!=='arrival' && !dead && !lunge && (forward !== 0 || right !== 0);
+    const moving=active && gamePhase!=='arrival' && !cinematic() && !dead && !lunge && (forward !== 0 || right !== 0);
     const run=keys.has('ShiftLeft')||keys.has('ShiftRight');
     const cutting = swing > .15;
     const topSpeed = (cutting ? .65 : drawn ? (run ? 4.4 : 2.4) : (run ? 5.6 : 2.8))*(hitReact>0?.4:1);
@@ -324,11 +381,12 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
       if(d>CUT_REACH-.2 && lunge.t<.6) velocity.set(e.position.x-position.x,0,e.position.z-position.z).normalize().multiplyScalar(9);
       else { velocity.set(0,0,0); player.rotation.y=yawTo(e); lunge=null; beginSwing(); killPending=e; }
     }
-    if(velocity.lengthSq()<.0004 || !active || gamePhase==='arrival') velocity.set(0,0,0);
+    if(velocity.lengthSq()<.0004 || !active || gamePhase==='arrival' || cinematic()) velocity.set(0,0,0);
     previous.copy(position);
     if(active && physics) {
       physics.move(velocity.x*dt,velocity.z*dt,dt,position);
     }
+    if(story==='duel' && active){const x=clamp(position.x,-5.7,5.7),z=clamp(position.z,-46,-40.7);if(x!==position.x || z!==position.z){position.x=x;position.z=z;physics?.reset(position);}}
     const dx=position.x-previous.x, dz=position.z-previous.z;
     const travel=Math.hypot(dx,dz);
     speed=dt>0 ? travel/dt : 0;
@@ -358,6 +416,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
       swing=Math.max(0,swing-dt);drawTime=Math.max(0,drawTime-dt);time+=dt;
       if(gamePhase!=='title') seconds+=dt;
       hitFlash=Math.max(0,hitFlash-dt*2); dodgeT=Math.max(0,dodgeT-dt); hitReact=Math.max(0,hitReact-dt); if(deadT>=0)deadT+=dt;
+      if(journey) updateStory(dt);
       if(gamePhase==='roam' && !encounterDone && Math.abs(position.x)<8 && position.z<10 && position.z>-10) {
         gamePhase='arrival'; arrivalTime=0; resetInput(); emit();
       }
@@ -385,9 +444,11 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     player.position.copy(position);
     /* enemies move after the wanderer, so their reach reads off this frame's position */
     pool.update(active?dt:0,{player:position,playerDead:dead,tokenAllowed:gamePhase==='fight' && !lunge && !killPending,onStrike});
+    if(story==='challenger' && storyTime>3 && challenger){challenger.rig.joints.chest.rotation.x+=.35*Math.sin(Math.PI*clamp((storyTime-3)/4,0,1));challenger.group.updateMatrixWorld(true);challenger.body?.sync();}
+    if((story==='departure' && master.position.z>-39.5) || story==='challenger' || story==='complete') {if(master)master.group.visible=false;}
     /* the cut: one hit per fighter per swing, inside the window, the reach and the cone */
     const swingT=swing>0?1-swing/SWING_TIME:-1;
-    if(active && !dead && swingT>=CUT_WINDOW[0] && swingT<=CUT_WINDOW[1]) {
+    if(active && !dead && !cinematic() && swingT>=CUT_WINDOW[0] && swingT<=CUT_WINDOW[1]) {
       if(killPending) { const e=killPending; killPending=null; hitThisSwing.add(e.id); if(e.alive){e.kill();audio.death?.();} gamePhase='fight'; standoffLinger=time+STANDOFF_LINGER; releaseEnemies(); emit(); }
       for(const e of pool.living()) {
         if(hitThisSwing.has(e.id))continue;
@@ -395,11 +456,13 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
         hitThisSwing.add(e.id); resolveCut(e);
       }
     }
+    if(active && gamePhase==='fight' && story==='duel' && master?.defeated) finishDuel();
     /* the wave */
     if(active && !practice) {
       if(gamePhase==='fight' && !pending.length && !lunge && !killPending && !pool.living().length) {
         standoff=null; standoffLinger=-1;
-        if(wave>=WAVES.length) victory();
+        if(story==='duel') finishDuel();
+        else if(wave>=WAVES.length) {if(journey) enterPalace();else victory();}
         else { gamePhase='clear'; clearUntil=time+CLEAR_TIME; health=Math.min(PLAYER_HEALTH,health+CLEAR_HEAL); setBanner(BANNERS.clear); emit(); }
       } else if(gamePhase==='clear' && time>=clearUntil) nextWave();
     }
@@ -500,7 +563,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     if(active && time-emitAt>.1) emit();
   }
   return {
-    update, ready, animationReady, bodyReady, clipsReady, position, toggleSound, enemies:pool,
+    interact, update, ready, animationReady, bodyReady, clipsReady, position, toggleSound, enemies:pool,
     look(horizontal,vertical=0){yaw+=horizontal;pitch=clamp(pitch+vertical,-.18,.9);mouseAt=time;},
     recordFrame(raw){if(raw>0 && raw<.3){frameSeconds+=raw;frameCount++;if(frameSeconds>1){fps=Math.round(frameCount/frameSeconds);frameSeconds=frameCount=0;}}},
     getState,

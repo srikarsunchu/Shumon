@@ -258,3 +258,12 @@ movement for 4.2 seconds, including the existing cut/card/fade, before wave
 one begins. Victory's Enter action is Continue, returning to exploration;
 the palace double doors open on approach. Death's Enter action starts a new
 journey. The starting route now extends to z=80 within a z=90 boundary.
+
+## Palace ending
+
+The initial path carries one brief objective: defeat the guards and challenge
+the master. In a journey run, the third wave leads directly to exploration.
+Bottom-centred subtitles and the R interaction prompt carry the palace scene;
+there is no extra chapter card. Ceremony and ending use the existing letterbox.
+The final `complete` phase uses the existing victory fade, showing SHUMON and
+THE NEW MASTER, then offers replay. Pause also supports ceremony and ending.

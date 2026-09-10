@@ -86,6 +86,24 @@ export function buildPalace(scene,world) {
     box('Equipment chest',1.35,.62,.7,x,F+.43,-41.05,wood);
     for(const side of [-1,1])box('Chest band',.06,.64,.72,x+side*.42,F+.44,-41.05,brass,false);
   }
+  // The prize uses the same curved, bevelled blade as the playable sword.
+  const swordRig=createSamurai({hat:false,lights:false});
+  const prize=swordRig.katana.clone(true);prize.name='The master’s sword';prize.visible=true;
+  prize.position.set(.48,F+1.18,-46.5);prize.rotation.set(0,Math.PI/2,0);prize.scale.setScalar(1.35);
+  prize.traverse(o=>{o.userData.noCollision=true;});root.add(prize);
+  // Release the unused mannequin; the displayed sword retains its own resources.
+  const keptGeo=new Set(),keptMat=new Set();prize.traverse(o=>{if(o.isMesh){keptGeo.add(o.geometry);keptMat.add(o.material);}});
+  for(const g of new Set(swordRig.meshes.map(m=>m.geometry)))if(!keptGeo.has(g))g.dispose();
+  for(const m of new Set(swordRig.meshes.map(m=>m.material)))if(!keptMat.has(m))m.dispose();
+  box('Sword display foot',1.7,.1,.5,0,F+.32,-46.5,ink);
+  for(const x of [-.45,.45]){box('Sword stand upright',.07,.78,.12,x,F+.74,-46.5,ink,false);box('Sword cradle',.2,.08,.18,x,F+1.09,-46.5,brass,false);}
+  const prizeLight=new THREE.PointLight(0xffdfae,1.1,4,2);prizeLight.position.set(0,F+2.2,-46);root.add(prizeLight);
+  const bag=new THREE.Group();bag.name='Already packed travelling bag';bag.position.set(4.6,F+.35,-46);root.add(bag);
+  box('Cloth travelling bundle',.55,.38,.4,0,0,0,border,false,bag);
+  box('Bundle tie',.06,.42,.42,0,0,0,beam,false,bag);
+  box('Master’s bench',.85,.1,.65,3.7,F+.48,-46,wood,false);
+  for(const x of [3.4,4])box('Bench foot',.1,.42,.55,x,F+.25,-46,beam,false);
+  let story='approach';
   // Two substantial leaves share a single doorway; open before the capsule reaches them.
   const doors=[];
   for(const side of [-1,1]){
@@ -117,6 +135,6 @@ export function buildPalace(scene,world) {
       diffuseColor.rgb*=.85+.12*sin(vTrail.x*8.+vTrail.y*70.)*cos(vTrail.y*90.);`);
   };trail.name='Forest approach';trail.userData.noCollision=true;trail.receiveShadow=true;scene.add(trail);
   for(const [x,z] of [[-3,75],[3.5,62],[-3,49],[3.5,36],[-3,23]]) {const y=terrainHeight(x,z);box('Path marker',.2,1.1,.2,x,y+.55,z,beam);box('Path lantern',.32,.4,.32,x,y+1.12,z,paper,false);const l=new THREE.PointLight(0xffba78,.65,5,2);l.position.set(x,y+1.2,z);scene.add(l);}
-  return {doors,update(dt,player){const inside=player.y>6 && player.z<-39.9 && player.z>-48.2 && Math.abs(player.x)<14.5;if(world.rain)world.rain.visible=!inside;if(world.leaves)world.leaves.mesh.visible=!inside;if(world.hallLight && inside)world.hallLight.intensity*=.4;
-    const near=Math.abs(player.x)<3 && Math.abs(player.z+39.72)<4.5 && player.y>6;for(const {hinge,side} of doors)hinge.rotation.y=THREE.MathUtils.damp(hinge.rotation.y,near?side*1.45:0,3,dt);}};
+  return {doors,setClaimed(v){prize.visible=!v;if(!v){root.attach(bag);bag.position.set(4.6,F+.35,-46);bag.rotation.set(0,0,0);}},setStory(v){story=v;},giveBag(rig){rig.joints.leftForearm.add(bag);bag.position.set(0,-.35,0);},update(dt,player){const inside=player.y>6 && player.z<-39.9 && player.z>-48.2 && Math.abs(player.x)<14.5;if(world.rain)world.rain.visible=!inside;if(world.leaves)world.leaves.mesh.visible=!inside;if(world.hallLight && inside)world.hallLight.intensity*=.4;
+    const near=Math.abs(player.x)<3 && Math.abs(player.z+39.72)<4.5 && player.y>6;for(const {hinge,side} of doors)hinge.rotation.y=THREE.MathUtils.damp(hinge.rotation.y,((near && story!=='duel') || story==='departure' || story==='challenger')?side*1.45:0,3,dt);}};
 }

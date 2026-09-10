@@ -535,3 +535,10 @@
   .tn-result { animation: none; opacity: 1; }
   .tn-entry.is-title[data-prompt="on"] .tn-prompt { animation: none; opacity: 1; }
 }
+
+/* Palace dialogue shares the existing film typography; a scrim protects it from lanterns. */
+.tn-story { position:absolute; z-index:12; bottom:12%; left:12%; right:12%; text-align:center; color:#eee9df; pointer-events:none; text-shadow:0 2px 5px #090b0d; }
+.tn-story p { display:table; margin:0 auto 12px; padding:8px 20px; background:rgba(9,11,13,.8); font:400 clamp(20px,2vw,27px)/1.4 "Cormorant Garamond",serif; }
+.tn-story small,.tn-story button { font:400 12px/1.5 Jost,sans-serif; letter-spacing:.15em; color:#eee9df; background:rgba(9,11,13,.85); padding:10px 16px; }
+.tn-story button { pointer-events:auto; border:1px solid #a29c8f; cursor:pointer; }
+.tn-master-form { margin-top:8px; font-size:11px; letter-spacing:.1em; }

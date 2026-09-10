@@ -25,6 +25,7 @@ export const ENEMY_TYPES = {
   swordsman: { health: 80,  damage: 22, reach: 2.0, walk: 2.4, strafe: 1.3, scale: 1, palette: 'raider' },
   shieldman: { health: 110, damage: 22, reach: 1.9, walk: 2.1, strafe: 1.1, scale: 1, block: .5, palette: 'ash' },
   spearman:  { health: 90,  damage: 22, reach: 2.7, walk: 2.5, strafe: 1.4, scale: 1, palette: 'raider' },
+  master:    { health: 240, damage: 18, reach: 2.0, walk: 2.1, strafe: 1.0, scale: 1, palette: 'ash' },
   brute:     { health: 160, damage: 38, reach: 2.2, walk: 2.0, strafe: .9,  scale: 1.12, palette: 'iron' },
 };
 /* the attack: raised blade, the cut, the recovery; the hit frame sits .15 s into the cut */
@@ -76,26 +77,26 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
   function endAttack(e, mode = 'circle') { releaseToken(e); e.attackT = -1; e.lunge = false; if (e.mode === 'attack') e.mode = mode; }
   function beginAttack(e, lunge = false) { e.mode = 'attack'; e.attackT = 0; e.struck = false; e.lunge = lunge; e.drawn = true; }
 
-  function spawn(type, { x = 0, z = TORII_Z, standoff = false, yaw = 0 } = {}) {
+  function spawn(type, { x = 0, z = TORII_Z, standoff = false, yaw = 0, y: spawnY, passive = false } = {}) {
     const spec = ENEMY_TYPES[type]; if (!spec) throw new Error(`Unknown enemy type: ${type}`);
-    const rig = samuraiFactory({ hat: true, mask: true, palette: spec.palette, lights: false });
+    const rig = samuraiFactory({ hat: type!=='master', mask: type!=='master', palette: spec.palette, lights: false });
     const group = rig.group; group.name = `Enemy ${type} ${nextId}`; group.scale.setScalar(spec.scale);
     /* a factory of its own may still bring the wanderer's two face lights; a crowd of them would recompile every material */
     const lights = []; group.traverse(o => { if (o.isLight) lights.push(o); }); lights.forEach(l => l.removeFromParent());
     scene.add(group);
-    const y = groundAt(x, z, 0) ?? groundAt(x, z, 1) ?? 0;
+    const y = spawnY ?? groundAt(x, z, 0) ?? groundAt(x, z, 1) ?? 0;
     const e = {
       id: nextId++, type, spec, rig, group, equipment: equipEnemy(rig,type), motion: null, body: null, plantFeet: createFootPlant(rig),
       /* ready: every loader has answered; shown: the first bound frame has been posed and synced */
       ready: false, shown: false, waitT: 0,
       position: new THREE.Vector3(x, y, z), velocity: new THREE.Vector3(), yaw, distance: Infinity,
       health: spec.health, maxHealth: spec.health, alive: true, removed: false,
-      mode: 'enter', standoff, drawn: !standoff, holdsToken: false, vulnerable: false,
+      mode: passive?'audience':'enter', stance:'stone', stanceTime:0, destination:null, bounds:null, standoff, drawn: !standoff, holdsToken: false, vulnerable: false,
       timer: 0, attackT: -1, struck: false, lunge: false, hitT: 0, flinchT: 0, deadT: -1, faded: 0,
       ring: RING[0] + random() * (RING[1] - RING[0]), strafe: random() < .5 ? -1 : 1, strafeT: 2 + random() * 2,
       phase: 0, gait: 0, time: random() * 10,
       hitIn() { return e.mode === 'attack' && !e.struck ? TELEGRAPH + HIT_FRAME - e.attackT : Infinity; },
-      state() { return { id: e.id, type: e.type, health: Math.max(0, e.health), maxHealth: e.maxHealth, alive: e.alive, attacking: e.mode === 'attack', staggered: e.mode === 'stagger', distance: e.distance }; },
+      state() { return { id: e.id, type: e.type, stance:e.stance, health: Math.max(0, e.health), maxHealth: e.maxHealth, alive: e.alive, attacking: e.mode === 'attack', staggered: e.mode === 'stagger', distance: e.distance }; },
       /* the standoff tell: a twitch of the sword arm and shoulders */
       flinch() { e.flinchT = .35; },
       /* the standoff over: draw and join the circle */
@@ -106,7 +107,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
       block() { if (!e.alive) return; e.hitT = HIT_TIME * .6; },
       /* a cut landed: true when it killed. A telegraph is broken by any hit; a cut already in motion carries through. */
       hit(damage, { stagger = false } = {}) {
-        if (!e.alive) return false;
+        if (!e.alive || e.mode==='audience' || e.mode==='depart') return false;
         e.health -= damage; e.vulnerable = false; e.hitT = HIT_TIME;
         if (e.health <= 0) { e.die(); return true; }
         if (stagger) e.stagger();
@@ -114,7 +115,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
         return false;
       },
       kill() { if (e.alive) { e.health = 0; e.die(); } },
-      die() { e.alive = false; e.health = 0; killed++; endAttack(e, 'dead'); e.mode = 'dead'; e.deadT = 0; e.velocity.set(0, 0, 0); },
+      die() { if(e.type==='master'){e.health=0;endAttack(e,'audience');e.mode='audience';e.drawn=false;e.defeated=true;e.velocity.set(0,0,0);return;} e.alive = false; e.health = 0; killed++; endAttack(e, 'dead'); e.mode = 'dead'; e.deadT = 0; e.velocity.set(0, 0, 0); },
     };
     e.group.position.copy(e.position); e.group.rotation.y = yaw;
     /* with a skin to load, the fighter is hidden and held at its mark until
@@ -138,6 +139,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
     e.distance = d; e.time += dt; e.timer -= dt;
     const want = dir.set(0, 0, 0);
     let swing = -1, telegraph = 0, faceYaw = Math.atan2(-nx, -nz);
+    if(e.type==='master' && !e.defeated && !['audience','depart'].includes(e.mode)){e.stanceTime+=dt;if(e.stanceTime>5 && e.mode==='circle'){e.stanceTime=0;e.stance=['stone','water','wind'][(['stone','water','wind'].indexOf(e.stance)+1)%3];}}
     if (e.mode === 'dead') {
       e.deadT += dt; faceYaw = e.yaw;
     } else if (ctx.playerDead) {
@@ -145,6 +147,12 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
       if (e.mode === 'attack') endAttack(e); if (e.mode !== 'stagger' && e.mode !== 'hit') e.mode = 'idle';
       if (e.timer < -1.5) e.drawn = false;
     } else switch (e.mode) {
+      case 'audience': e.drawn=e.type==='master' && !e.defeated; if(e.cinematicReact)faceYaw=Math.PI; break;
+      case 'depart': {
+        e.drawn=false;faceYaw=e.yaw;
+        if(e.destination){const v=dir.copy(e.destination).sub(e.position);v.y=0;if(v.length()>.12){faceYaw=Math.atan2(-v.x,-v.z);want.copy(v.normalize()).multiplyScalar(1.6);}}
+        break;
+      }
       case 'idle': e.mode = 'circle'; e.drawn = true; break;
       case 'enter': {
         const stop = e.standoff ? STANDOFF_DISTANCE : e.ring;
@@ -196,6 +204,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
       const rx = e.position.x - p.x, rz = e.position.z - p.z, rd = Math.hypot(rx, rz);
       if (rd < PLAYER_ROOM && rd > 1e-6) { e.position.x = p.x + rx / rd * PLAYER_ROOM; e.position.z = p.z + rz / rd * PLAYER_ROOM; }
     }
+    if(e.bounds){e.position.x=clamp(e.position.x,e.bounds.minX,e.bounds.maxX);e.position.z=clamp(e.position.z,e.bounds.minZ,e.bounds.maxZ);}
     const ground = groundAt(e.position.x, e.position.z, e.position.y);
     if (ground !== undefined) e.position.y = THREE.MathUtils.damp(e.position.y, ground, 20, dt);
     const travel = Math.hypot(e.position.x - px, e.position.z - pz);
@@ -210,7 +219,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
     if (e.mode === 'dead') react = { clip: 'Death01', t: e.deadT / DEATH_TIME };
     else if (e.mode === 'stagger') { const el = STAGGER_TIME - e.timer; if (el < STAGGER_CLIP) react = { clip: 'Hit_Head', t: el / STAGGER_CLIP }; }
     else if (e.hitT > 0 && e.mode !== 'attack') react = { clip: 'Hit_Chest', t: 1 - e.hitT / HIT_TIME };
-    const pose = { speed: e.gait / 5.6, run: 0, turnLean: 0, phase: e.phase, drawn: e.drawn, wind: 1, swing, telegraph, weapon: e.type, time: e.time, react: authored ? react : null };
+    const pose = { stance:e.type==='master'?e.stance:undefined, speed: e.gait / 5.6, run: 0, turnLean: 0, phase: e.phase, drawn: e.drawn, wind: 1, swing, telegraph, weapon: e.type==='master'?e.stance:e.type, time: e.time, react: authored ? e.cinematicReact || react : null };
     e.rig.update(dt, pose); e.motion?.update(dt, pose);
     applyCombatStyle(e.rig,pose); e.equipment.update();
     /* the standoff's twitch is a tell of its own, on either rig; the reel of
@@ -233,7 +242,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
     }
     e.group.updateMatrixWorld(true);
     /* the feet are planted on the living only: a body on the ground is the clip's to pose */
-    if (e.mode !== 'dead') { e.plantFeet((x, z, y) => groundAt(x, z, y - .1), dt, e.gait); e.group.updateMatrixWorld(true); }
+    if (e.mode !== 'dead' && !e.cinematicReact) { e.plantFeet((x, z, y) => groundAt(x, z, y - .1), dt, e.gait); e.group.updateMatrixWorld(true); }
     e.body?.sync();
     if (!e.shown) { e.shown = true; e.group.visible = true; }
   }

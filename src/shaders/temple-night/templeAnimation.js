@@ -32,13 +32,15 @@ export async function loadAuthoredMotion(samurai, data) {
     return {joint,bone,sourceRest:bone.getWorldQuaternion(new THREE.Quaternion()).invert(),rest:joint.getWorldQuaternion(new THREE.Quaternion()).premultiply(rootInverse)};
   });
   mixer.stopAllAction();
+  const reactionClips={...REACT_CLIPS};
+  for(const name of ['Sitting_Enter','Sitting_Exit'])if(clips[name])reactionClips[name]={blendIn:.08,blendOut:0,span:[0,1],hold:true};
   const actions={};
-  for(const name of ['Idle_Loop','Walk_Loop','Jog_Fwd_Loop','Sprint_Loop','Sword_Idle','Sword_Attack',...Object.keys(REACT_CLIPS)]) {
+  for(const name of ['Idle_Loop','Walk_Loop','Jog_Fwd_Loop','Sprint_Loop','Sword_Idle','Sword_Attack',...Object.keys(reactionClips)]) {
     if(!clips[name]) throw new Error(`Animation clip missing: ${name}`);
     actions[name]=mixer.clipAction(clips[name]).play(); actions[name].setEffectiveWeight(0);
   }
   actions.Sword_Attack.paused=true;
-  for(const name of Object.keys(REACT_CLIPS)) { const a=actions[name]; a.paused=true; a.setLoop(THREE.LoopOnce,1); a.clampWhenFinished=true; }
+  for(const name of Object.keys(reactionClips)) { const a=actions[name]; a.paused=true; a.setLoop(THREE.LoopOnce,1); a.clampWhenFinished=true; }
 
   /* Locomotion is driven by distance, not by the clock. Free-running walk and
      jog loops blended at walking speed drift in and out of step with each
@@ -79,9 +81,9 @@ export async function loadAuthoredMotion(samurai, data) {
       const tell=typeof s.telegraph==='number' && s.telegraph>0 && !(s.swing>=0) ? THREE.MathUtils.clamp(s.telegraph,0,1) : -1;
       const attack=tell>=0?Math.min(1,tell*8):s.swing>=0?Math.min(1,s.swing*12,(1-s.swing)*10):0;
       /* the reaction: given outright, or a roll timed here from a bare `dodge` flag */
-      let react=s.react && REACT_CLIPS[s.react.clip] ? s.react : null;
+      let react=s.react && reactionClips[s.react.clip] ? s.react : null;
       if(!react && s.dodge===true) { rollT=rollT<0?0:rollT+dt/.55; react={clip:'Roll',t:rollT}; } else if(!react) rollT=-1;
-      const spec=react?REACT_CLIPS[react.clip]:null, rt=react?Math.max(0,react.t):0;
+      const spec=react?reactionClips[react.clip]:null, rt=react?Math.max(0,react.t):0;
       const reactW=spec?THREE.MathUtils.clamp(Math.min(rt/spec.blendIn,spec.hold?Infinity:(1-rt)/spec.blendOut),0,1):0;
       const weights={Idle_Loop:!s.drawn?1-move:0,Sword_Idle:s.drawn?1-move:0,Walk_Loop:move*(1-jog),Jog_Fwd_Loop:move*jog*(1-run),Sprint_Loop:move*run};
       for(const [name,weight] of Object.entries(weights)) actions[name].setEffectiveWeight(weight*(1-attack)*(1-reactW));
@@ -93,7 +95,7 @@ export async function loadAuthoredMotion(samurai, data) {
       if(s.stance==='water' || s.stance==='wind') cutTime=.65-.6*THREE.MathUtils.smoothstep(cutTime,.1,.65);
       actions.Sword_Attack.time=cutTime*clips.Sword_Attack.duration;
       actions.Sword_Attack.setEffectiveWeight(attack*(1-reactW));
-      for(const name of Object.keys(REACT_CLIPS)) {
+      for(const name of Object.keys(reactionClips)) {
         const a=actions[name];
         if(react && react.clip===name) {
           const d=clips[name].duration, [s0,s1]=spec.span;

@@ -20,8 +20,9 @@ the shape of the data.
 | 3 | 1 brute + 1 swordsman | standoff against the brute |
 
 Between waves: a short `clear` phase (3 s) with a banner, health restores 30.
-Victory when wave 3 is cleared. Death ends the run. `Enter` restarts from
-wave 1 on either end card. Target total time 3–5 minutes.
+In a journey run, clearing wave 3 opens the palace finale described below.
+Standalone combat ends at wave 3. Death ends the run; Enter starts a new run
+from an end card. Target total time 3–5 minutes.
 
 ## Controls
 
@@ -33,6 +34,7 @@ wave 1 on either end card. Target total time 3–5 minutes.
 | F (hold) | guard; a press within the parry window is a parry |
 | Q | dodge roll (Roll clip, .55 s invulnerable) |
 | E | draw / sheathe |
+| R | take the displayed sword when nearby |
 | 1 2 3 4 | stance: Stone, Water, Wind, Moon |
 | Esc | pause; Enter restarts on an end card; M sound |
 
@@ -89,7 +91,8 @@ object with at least:
 ```ts
 {
   active: boolean,            // simulation running (not paused, not on the title)
-  phase: 'title' | 'standoff' | 'fight' | 'clear' | 'dead' | 'victory',
+  phase: 'title' | 'roam' | 'arrival' | 'standoff' | 'fight' | 'clear' | 'ceremony' | 'ending' | 'complete' | 'dead' | 'victory',
+  story: string | null, storyTime: number, interaction: boolean,
   wave: number,               // 1-based; 0 before the first wave
   waves: number,              // 3
   health: number, maxHealth: number,
@@ -162,10 +165,35 @@ existing three-wave standoff sequence starts. These phases are part of the
 state contract and support pause/resume. The standalone combat test harness
 can opt out with `journey:false`.
 
-Victory offers Continue: the player returns to `roam` with the encounter
-completed, can ascend the temple steps and enter through two proximity-opening
+Clearing the courtyard returns to `roam` with the encounter
+completed. The player can ascend the temple steps and enter through two proximity-opening
 front doors. The ground floor contains a central tatami reception hall, an
 armour room and a writing room. Doors are visual moving leaves; their approach
 zone opens them before the player crosses the static doorway. Interiors have
 solid walls and an open doorway, not a solid exterior block. A closer camera
 is used inside. Restart begins a new journey; the encounter triggers once.
+
+## Five-minute palace finale
+
+Journey runs now transition directly from the third courtyard wave to `roam`
+with story `palace`, restoring health. No intermediate victory card appears.
+The master waits beside a sword display in the rear reception hall. Entering
+triggers `invitation`; within 2.1 m of the display, R (or its on-screen button)
+claims the sword. `ceremony` holds movement for 2.4 seconds, then begins the
+final `fight` with full health. The master has 240 health, deals 18 damage,
+and cycles Stone → Water → Wind between attacks after at least five seconds.
+Matching his current stance deals ×1.6 damage and staggers. His attacks retain
+the captured sword clip and the stance-specific directional layers. Both
+fighters stay within the clear central hall during this duel.
+
+The master yields at zero health and remains alive. `ending` moves him to his
+bench, plays the library Sitting_Enter / Sitting_Exit clips, then sends him
+through the doors carrying his packed bag. A new challenger enters and bows.
+The final line reveals that the player has inherited the position. `complete`
+shows SHUMON / THE NEW MASTER, with Enter to replay and Esc to title.
+Dialogue is subtitled; no recorded voice assets are used. All story clocks
+pause with the simulation. Restart resets the display, bag, NPCs, and journey.
+
+State adds `story`, `storyTime`, and `interaction`; enemies expose `stance`.
+`interact()` is proximity-gated and can claim the sword only once. Standalone
+`journey:false` combat retains the original three-wave victory contract.

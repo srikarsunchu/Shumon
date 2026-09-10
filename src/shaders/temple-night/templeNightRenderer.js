@@ -2546,7 +2546,7 @@ try {
   initPost();
   environment = buildEnvironment(scene, WORLD, POST, LOW);
   palace = buildPalace(scene,WORLD);
-  gameplay = createGameplay?.({ scene, camera, canvas, wind: landscape.wind, grade: WORLD.grade, journey: true });
+  gameplay = createGameplay?.({ scene, camera, canvas, wind: landscape.wind, grade: WORLD.grade, journey: true, palace });
   WORLD.fg.forEach(m => m.layers.set(1));
   /* Game hook: rain, leaves and ripples stay in game mode — they are the
      mood; only the cursor wisps are hidden (above). */
