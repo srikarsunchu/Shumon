@@ -328,3 +328,27 @@ console.log('PASS: fighters wear their palettes under hat and mask without light
   game.dispose();
 }
 console.log('PASS: title entry starts a fresh run after a paused fight.');
+
+/* Every stance/enemy pairing, including both outcomes of a shield block. */
+{
+  const counters={stone:'swordsman',water:'shieldman',wind:'spearman',moon:'brute'};
+  for(const [stance,target] of Object.entries(counters)) {
+    for(const type of Object.values(counters)) {
+      const {game,player}=await world({random:()=>.75});
+      game.start({practice:true}); game.setStance(stance); game.toggleSword(); step(game,40);
+      const enemy=game.spawnEnemy(type,{x:player.position.x,z:player.position.z-1.4,standoff:true});
+      const before=enemy.health;
+      game.attack(); step(game,24);
+      near(before-enemy.health,34*(target===type?1.6:1),1e-9,`${stance} damage against ${type}`);
+      assert.equal(enemy.state().staggered,target===type,`${stance} stagger against ${type}`);
+      game.dispose();
+    }
+    const {game,player}=await world({random:()=>.25});
+    game.start({practice:true}); game.setStance(stance); game.toggleSword(); step(game,40);
+    const shield=game.spawnEnemy('shieldman',{x:player.position.x,z:player.position.z-1.4,standoff:true});
+    game.attack(); step(game,24);
+    near(shield.health,110-(stance==='water'?54.4:0),1e-9,`${stance}: Water bypasses a shield block; other stances are blocked`);
+    game.dispose();
+  }
+}
+console.log('PASS: all 16 stance matchups deal the correct damage and stagger; only Water bypasses shield blocks.');
