@@ -117,6 +117,10 @@ def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     p = argparse.ArgumentParser(description="Build the samurai body GLB with MPFB2")
     p.add_argument("--out", default="public/assets/samurai", help="output directory")
+    p.add_argument("--shoes", default="none",
+                   help="shoes asset name from the system pack (shoes01-06), or 'none'")
+    p.add_argument("--hair", default="ponytail01",
+                   help="hair asset name from the system pack (afro01, bob01, bob02, braid01, long01, ponytail01, short01-04), or 'none'")
     p.add_argument("--height", type=float, default=1.74, help="final height in metres")
     p.add_argument("--dry", action="store_true", help="preflight only; print a JSON report")
     p.add_argument("--decimate", type=float, default=None,
@@ -500,7 +504,14 @@ def main():
     skin_path = AssetService.find_asset_absolute_path(SKIN[0], asset_subdir=SKIN[1])
     report["assets"]["skin"] = skin_path
     asset_paths = []
-    for fname, subdir, atype in ASSETS:
+    assets = list(ASSETS)
+    if args.hair and args.hair != "none":
+        assets.append((args.hair + ".mhclo", "hair", "Hair"))
+    if args.shoes and args.shoes != "none":
+        assets.append((args.shoes + ".mhclo", "clothes", "Clothes"))
+    report["hair"] = args.hair
+    report["shoes"] = args.shoes
+    for fname, subdir, atype in assets:
         p = AssetService.find_asset_absolute_path(fname, asset_subdir=subdir)
         report["assets"][fname] = p
         asset_paths.append((p, atype, fname))
@@ -662,7 +673,7 @@ def main():
     # Only brows and lashes are cut-outs; skin and eyes must be OPAQUE (BLEND on the body
     # sorts badly in three.js and forces PNG textures).
     for m in meshes:
-        cutout = any(k in m.name.lower() for k in ("eyebrow", "eyelash"))
+        cutout = any(k in m.name.lower() for k in ("eyebrow", "eyelash", "hair", "ponytail", "bob", "braid", "afro", "short", "long"))
         for mat in m.data.materials:
             if cutout and material_has_alpha(mat):
                 set_alpha_blend(mat)

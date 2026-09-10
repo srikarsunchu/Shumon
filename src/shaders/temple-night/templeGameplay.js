@@ -13,9 +13,14 @@ const CANVAS = typeof document !== 'undefined' && typeof document.createElement 
 export const STANCES = ['stone', 'water', 'wind', 'moon'];
 /* the authored pose clips (plan B6), each optional: a missing file leaves
    that behaviour to the procedural rig and the Quaternius library */
-export const CLIP_NAMES = ['idle_hand_on_hilt', 'saya_hold', 'draw', 'sheathe_chiburi',
-  'stance_stone_idle', 'stance_water_idle', 'stance_wind_idle', 'stance_moon_idle',
-  'attack_stone', 'attack_water', 'attack_wind', 'attack_moon'];
+/* The authored clips (anim/poses → public/anim/clips) are not loaded by
+   default: hand-set keys read stiffer than the library's captured idle,
+   sword idle and cut, and the procedural draw, so those stay in charge of
+   the body. Stances still switch (keys 1-4) and are reported in the HUD;
+   move names from AUDITION_CLIP_NAMES into CLIP_NAMES to audition one. */
+export const CLIP_NAMES = [];
+export const AUDITION_CLIP_NAMES = ['idle_hand_on_hilt', 'saya_hold', 'stance_stone_idle', 'stance_water_idle', 'stance_wind_idle', 'stance_moon_idle',
+  'draw', 'sheathe_chiburi', 'attack_stone', 'attack_water', 'attack_wind', 'attack_moon'];
 const DRAW_TIME = .5, SHEATHE_TIME = .4, SHEATHE_CLIP_TIME = .9, SWING_TIME = .85;
 
 // Rapier owns movement collision; mesh queries supply foot placement and camera clearance.

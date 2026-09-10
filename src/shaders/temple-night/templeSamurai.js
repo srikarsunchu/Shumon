@@ -400,8 +400,10 @@ export function createSamurai(opt) {
     add(elbow, new THREE.BoxGeometry(.08, .012, .05), M.gold, 0, -.04, -.03);
     add(elbow, new THREE.BoxGeometry(.08, .012, .05), M.gold, 0, -.225, -.03);
     const hand = bone(elbow, 0, -.27, 0);
-    wearParts.push(add(hand, new THREE.BoxGeometry(.072, .085, .04), M.glove, 0, -.04, 0));
-    wearParts.push(add(hand, new THREE.BoxGeometry(.06, .05, .045), M.glove, 0, -.10, -.005));
+    const glove = add(hand, new THREE.BoxGeometry(.072, .085, .04), M.glove, 0, -.04, 0);
+    const fingers = add(hand, new THREE.BoxGeometry(.06, .05, .045), M.glove, 0, -.10, -.005);
+    glove.userData.glove = fingers.userData.glove = true;
+    wearParts.push(glove, fingers);
     return { shoulder: shoulder, elbow: elbow, hand: hand };
   };
   const L = arm(-1), R = arm(1);
@@ -419,8 +421,10 @@ export function createSamurai(opt) {
     shin.rotation.y = 0;
     add(knee, new THREE.BoxGeometry(.11, .012, .06), M.gold, 0, -.05, -.05);
     const foot = bone(knee, 0, -.40, 0);
-    wearParts.push(add(foot, new THREE.BoxGeometry(.095, .07, .25), M.glove, 0, -.06, -.045));
-    wearParts.push(add(foot, new THREE.BoxGeometry(.10, .03, .26), M.lacquer, 0, -.085, -.045));
+    const boot = add(foot, new THREE.BoxGeometry(.095, .07, .25), M.glove, 0, -.06, -.045);
+    const sole = add(foot, new THREE.BoxGeometry(.10, .03, .26), M.lacquer, 0, -.085, -.045);
+    boot.userData.boot = sole.userData.boot = true;
+    wearParts.push(boot, sole);
     return { hip: hip, knee: knee, foot: foot };
   };
   const LL = leg(-1), RL = leg(1);
@@ -692,14 +696,16 @@ export function createSamurai(opt) {
     /* let the trousers, sleeves, gloves and boots out over the loaded body */
     const grow = bodyMode === 'glb' ? 1.3 : 1;
     clothParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.x *= grow; m.scale.z *= grow; });
-    wearParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.multiplyScalar(bodyMode === 'glb' ? 1.35 : 1); });
+    /* a loaded body has real hands, so the glove blocks go; the boots stay
+       unless the body brought its own (templeBody.js decides that) */
+    wearParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.multiplyScalar(bodyMode === 'glb' ? 1.35 : 1); if (m.userData.glove) m.visible = bodyMode !== 'glb'; });
     armourParts.forEach(m => { m.scale.copy(m.userData.baseScale); if (bodyMode === 'glb') { m.scale.z *= 1.24; m.scale.x *= 1.06; } });
     mon.position.z = bodyMode === 'glb' ? -.258 : -.207;
     return bodyMode;
   }
 
   return { group, update, meshes, height:1.74, joints,
-    legs:[LL,RL], katana, saya, sheathedHilt, grip, skinParts, hairParts,
+    legs:[LL,RL], katana, saya, sheathedHilt, grip, skinParts, hairParts, clothParts, wearParts,
     fitSkeleton, fitHair, setBodyMode, get bodyMode() { return bodyMode; }, get hipY() { return hipY; },
   };
 }

@@ -121,6 +121,13 @@ export async function loadBody(samurai, opt) {
     rest[joint] = samurai.group.worldToLocal(bone.getWorldPosition(v)).toArray();
   }
   samurai.fitSkeleton(rest);
+  /* a body that brings its own hair mesh retires the procedural knot; one
+     without it gets the knot lifted onto its larger skull */
+  const hasHair = skinnedMeshes.some(m => /hair|ponytail|bob|braid|afro|short|long/i.test(m.name)) || info.hair && info.hair !== 'none';
+  samurai.hairParts.forEach(h => { h.visible = !hasHair; });
+  /* likewise a body wearing real shoes retires the procedural boots */
+  const hasShoes = skinnedMeshes.some(m => /shoe|boot|sandal/i.test(m.name)) || info.shoes && info.shoes !== 'none';
+  samurai.wearParts.forEach(m => { if (m.userData.boot) m.visible = !hasShoes; });
   samurai.fitHair({ crownY: typeof info.crownY === 'number' ? info.crownY : height, lift: .04, scale: 1.3 });
 
   /* ---- bind: pose the joints into the body's rest, record both sides ---- */
