@@ -2335,7 +2335,7 @@ function applyCamera() {
 /* The host lifecycle below changes only ownership of the authored renderer.
    Scene construction, materials, shaders, post passes, camera composition,
    procedural textures, weather, and pointer atmosphere remain source-exact. */
-function resize() {
+function resize(light) {
   const w = vpW(), h = vpH();
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, DPR_CAP) * PERF.scale);
   renderer.setSize(w, h, true);
@@ -2352,7 +2352,7 @@ function resize() {
     const want = (!LOW && PERF.scale > .78) ? 2 : 0;
     if (POST.scene.samples !== want) { POST.scene.samples = want; POST.scene.dispose(); }
   }
-  if (WANT_SHADOW && WORLD.key) WORLD.key.shadow.needsUpdate = true;
+  if (WANT_SHADOW && WORLD.key && !light) WORLD.key.shadow.needsUpdate = true;
   if (WORLD.embers) WORLD.embers.material.uniforms.uSize.value = h * renderer.getPixelRatio() * .5;
   if (WISP.mesh) WISP.mesh.material.uniforms.uPx.value = h * renderer.getPixelRatio();
   placeMoon();
@@ -2436,8 +2436,20 @@ function renderFrame(now) {
     PERF.acc += raw; PERF.n++;
     if (PERF.n >= 40 || PERF.acc > .9) {
       const avg = PERF.acc / PERF.n; PERF.acc = 0; PERF.n = 0;
-      if (avg > .0230 && PERF.scale > .55) { PERF.scale = Math.max(.55, PERF.scale * (avg > .05 ? .64 : .85)); resize(); }
-      else if (avg < .0138 && PERF.scale < 1) { PERF.scale = Math.min(1, PERF.scale + .08); resize(); }
+      /* Hysteresis: a frame time that sits between the two thresholds used
+         to bounce the scale down one second and up the next, and every
+         change re-allocated the targets and re-rendered the shadow map — a
+         hitch every forty frames that read as the walk stalling. A change
+         now needs two agreeing measurements, waits out a cooldown, and
+         skips the shadow rebuild. */
+      const verdict = (avg > .0230 && PERF.scale > .55) ? -1 : (avg < .0138 && PERF.scale < 1) ? 1 : 0;
+      PERF.votes = verdict && verdict === PERF.lastVerdict ? (PERF.votes || 0) + 1 : (verdict ? 1 : 0);
+      PERF.lastVerdict = verdict;
+      if (verdict && PERF.votes >= 2 && clock - (PERF.last || 0) > 3) {
+        PERF.scale = verdict < 0 ? Math.max(.55, PERF.scale * (avg > .05 ? .64 : .85)) : Math.min(1, PERF.scale + .08);
+        PERF.last = clock; PERF.votes = 0;
+        resize(true);
+      }
     }
   }
 

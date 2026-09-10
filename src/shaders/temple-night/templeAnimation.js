@@ -22,6 +22,27 @@ export async function loadAuthoredMotion(samurai, data) {
     actions[name]=mixer.clipAction(clips[name]).play(); actions[name].setEffectiveWeight(0);
   }
   actions.Sword_Attack.paused=true;
+  /* Locomotion is driven by distance, not by the clock. Free-running walk and
+     jog loops blended at walking speed drift in and out of step with each
+     other on a beat of a few seconds, which reads as the walk stalling and
+     restarting. Instead every locomotion clip is scrubbed from the gait phase
+     the controller accumulates per metre, with each clip's own origin set to
+     the moment its left foot is furthest forward, so a blend of any two is
+     always the same footfall. */
+  const LOCO=['Walk_Loop','Jog_Fwd_Loop','Sprint_Loop'];
+  const hipsBone=source.getObjectByName('DEF-hips'), footBone=source.getObjectByName('DEF-footL')||source.getObjectByName('DEF-foot.L');
+  const origin={}, pA=new THREE.Vector3(), pB=new THREE.Vector3();
+  for(const name of LOCO) {
+    const a=actions[name], d=clips[name].duration; let best=-Infinity, bestT=0;
+    for(const other of Object.values(actions)) other.setEffectiveWeight(other===a?1:0);
+    for(let i=0;i<48;i++) {
+      a.time=d*i/48; mixer.update(0); source.updateMatrixWorld(true);
+      const forward=-(footBone.getWorldPosition(pA).z-hipsBone.getWorldPosition(pB).z);   /* the source faces −z */
+      if(forward>best){best=forward;bestT=a.time;}
+    }
+    origin[name]=bestT; a.paused=true;
+  }
+  for(const a of Object.values(actions)) a.setEffectiveWeight(0);
   const worldQ=new THREE.Quaternion(),parentQ=new THREE.Quaternion(),rootQ=new THREE.Quaternion();
   return {
     update(dt,s) {
@@ -30,7 +51,8 @@ export async function loadAuthoredMotion(samurai, data) {
       const attack=s.swing>=0?Math.min(1,s.swing*12,(1-s.swing)*10):0;
       const weights={Idle_Loop:!s.drawn?1-move:0,Sword_Idle:s.drawn?1-move:0,Walk_Loop:move*(1-jog),Jog_Fwd_Loop:move*jog*(1-run),Sprint_Loop:move*run};
       for(const [name,weight] of Object.entries(weights)) actions[name].setEffectiveWeight(weight*(1-attack));
-      actions.Walk_Loop.setEffectiveTimeScale(Math.max(.1,speed/2.2)); actions.Jog_Fwd_Loop.setEffectiveTimeScale(Math.max(.1,speed/3.2)); actions.Sprint_Loop.setEffectiveTimeScale(Math.max(.1,speed/5.6));
+      const cycle=((s.phase||0)/(2*Math.PI))%1;
+      for(const name of LOCO) { const d=clips[name].duration; actions[name].time=(((cycle*d+origin[name])%d)+d)%d; }
       actions.Sword_Attack.time=Math.max(0,s.swing)*clips.Sword_Attack.duration;
       actions.Sword_Attack.setEffectiveWeight(attack);
       mixer.update(dt); source.updateMatrixWorld(true);
