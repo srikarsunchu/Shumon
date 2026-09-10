@@ -47,6 +47,7 @@ export type GameStatus = {
 type Gameplay = {
   start?: (options?: { restart?: boolean }) => void;
   pause?: () => void;
+  returnToTitle?: () => void;
   restart?: (options?: { restart?: boolean }) => void;
   attack?: () => void;
   holdStandoff?: (down: boolean) => void;
@@ -453,7 +454,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
   }, [begin]);
 
   const toTitle = useCallback(() => {
-    gameRef.current?.pause?.();
+    gameRef.current?.returnToTitle?.();
     setHint(null);
     setWaveCard(null);
     setMachine("toTitle");

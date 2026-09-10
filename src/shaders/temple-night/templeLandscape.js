@@ -86,7 +86,7 @@ export function buildLandscape(scene, low=false, sky=null) {
   const p=terrain.attributes.position,colors=[];
   const ground=new THREE.Color(0x040806),moss=new THREE.Color(0x050803),pathC=new THREE.Color(0x1c1712),c=new THREE.Color();
   for(let i=0;i<p.count;i++) {
-    const x=p.getX(i),z=p.getZ(i); p.setY(i,terrainHeight(x,z)-.012);
+    const x=p.getX(i),z=p.getZ(i); p.setY(i,terrainHeight(x,z)-.08);
     c.copy(ground).lerp(moss,Math.max(0,Math.sin(x*.09+1)*Math.cos(z*.07)+.4*Math.sin(x*.31)*Math.sin(z*.27+1))*.8);
     c.lerp(pathC,pathAmount(x,z)*(.8+rnd()*.2));
     c.multiplyScalar(.82+rnd()*.28); colors.push(c.r,c.g,c.b);
@@ -96,7 +96,18 @@ export function buildLandscape(scene, low=false, sky=null) {
      grey specular sheen over the whole field that no albedo could get under.
      (It must stay a StandardMaterial — templeGameplay.js only builds physics
      colliders for meshes whose material isMeshStandardMaterial.) */
-  const groundMesh=new THREE.Mesh(terrain,new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:1,specularIntensity:0})); groundMesh.receiveShadow=true; scene.add(groundMesh);
+  const groundMesh=new THREE.Mesh(terrain,new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:1,specularIntensity:0})); groundMesh.receiveShadow=true;
+  groundMesh.material.onBeforeCompile=shader=>{
+    shader.vertexShader='varying vec3 vSoil;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvSoil=position;');
+    shader.fragmentShader='varying vec3 vSoil;\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      float soilPatch=sin(vSoil.x*.8+sin(vSoil.z*.4))*cos(vSoil.z*.9);
+      float grit=sin(vSoil.x*29.)*sin(vSoil.z*31.);
+      diffuseColor.rgb*=.86+.18*soilPatch+.035*grit;
+      diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.8,1.14,.78),smoothstep(.2,.8,soilPatch)*.5);`);
+  };
+  scene.add(groundMesh);
 
   function bend(material, amplitude) {
     material.onBeforeCompile=shader=>{
@@ -125,12 +136,15 @@ export function buildLandscape(scene, low=false, sky=null) {
   const grass=new THREE.InstancedMesh(grassGeo,grassMat,count); grass.userData.noCollision=true; grass.receiveShadow=true;
   const warm=new THREE.Color(1.55,.92,.55),plain=new THREE.Color();
   let n=0;
-  for(let i=0;i<count*3 && n<count;i++) {
+  for(let i=0;i<count*12 && n<count;i++) {
     /* two thirds of the blades go where the player walks, the rest thin out
        toward the ring */
     const near=rnd()<.75, x=(rnd()-.5)*(near?90:130), z=near?rnd()*90-44:rnd()*134-78;
     if((Math.abs(x)<12 && z<16) || (Math.abs(x)<22 && z < -32)) continue;
     if(pathAmount(x,z)>.15) continue;
+    // Broad clumps and bare pockets, with small gaps around each root.
+    const density=.35+.3*Math.sin(x*.47+Math.sin(z*.2))*Math.cos(z*.39);
+    if(rnd()>density) continue;
     dummy.position.set(x,terrainHeight(x,z),z); dummy.rotation.set(0,rnd()*Math.PI,0); dummy.scale.setScalar(.55+rnd()*.7); dummy.updateMatrix(); grass.setMatrixAt(n,dummy.matrix);
     const nearLanterns=Math.abs(x)>11.5&&Math.abs(x)<19&&z>-27&&z<3;
     plain.setScalar(.85+rnd()*.3);
@@ -147,7 +161,7 @@ export function buildLandscape(scene, low=false, sky=null) {
   };
   const leafMat=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:1}); bend(leafMat,.04);
   const bark=new THREE.MeshPhysicalMaterial({color:0x08090b,roughness:1,specularIntensity:.15}); /* Standard-derived: the trunks collide */
-  const INNER=90, RING=low?70:110;
+  const INNER=0, RING=low?70:110;
   const mainNear=new THREE.InstancedMesh(crownColors(new THREE.IcosahedronGeometry(1.8,2)),leafMat,INNER);
   const mainFar=new THREE.InstancedMesh(crownColors(new THREE.IcosahedronGeometry(2.2,1)),leafMat,RING);
   const lobes=new THREE.InstancedMesh(crownColors(new THREE.IcosahedronGeometry(1.3,1)),leafMat,(INNER+RING)*2);
@@ -186,7 +200,7 @@ export function buildLandscape(scene, low=false, sky=null) {
 
   /* ---- rocks: one shared, vertex-coloured block — wet blue on top, dark
      on the sides — as separate meshes so they collide */
-  const rockGeo=new THREE.DodecahedronGeometry(1,0),rc=[],rn=rockGeo.attributes.normal,rp=rockGeo.attributes.position;
+  const rockGeo=new THREE.IcosahedronGeometry(1,2),rc=[],rn=rockGeo.attributes.normal,rp=rockGeo.attributes.position;
   const rockTop=new THREE.Color(0x0f171c),rockSide=new THREE.Color(0x060809);
   for(let i=0;i<rp.count;i++) { c.copy(rockSide).lerp(rockTop,THREE.MathUtils.smoothstep(rn.getY(i)*.6+rp.getY(i)*.4,-.1,.9)); rc.push(c.r,c.g,c.b); }
   rockGeo.setAttribute('color',new THREE.Float32BufferAttribute(rc,3));

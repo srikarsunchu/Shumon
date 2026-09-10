@@ -156,6 +156,9 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
 
   /* ---- the run ---- */
   function beginRun(practiceMode) {
+    position.set(0,.02,7); physics?.reset(position); resetInput();
+    yaw=0; pitch=.22; cameraReady=false; stance='stone'; drawn=false; drawTime=0;
+    player.rotation.set(0,0,0); player.position.copy(position);
     pool.clear(); practice=practiceMode; wave=0; health=PLAYER_HEALTH; hitFlash=0; perfects=0; seconds=0; result=null; standoff=null; standoffLead=null;
     banner=null; pending=[]; lunge=null; killPending=null; deadT=-1; dodgeT=0; hitReact=0; guardHeld=false; parryAt=-Infinity; swingTarget=null;
     player.rotation.x=0; player.rotation.z=0; swing=0; queuedAttack=false;
@@ -294,7 +297,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
   const yawTo=e=>Math.atan2(-(e.position.x-position.x),-(e.position.z-position.z));
   function update(dt) {
     dt = clamp(dt, 0, .05);
-    player.visible = true;
+    player.visible = gamePhase!=='title';
     const dead=gamePhase==='dead';
     const forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
     const right=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
@@ -500,6 +503,7 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
          re-request pointer lock: it is a no-op unless the run is over */
       if(active && !fresh) return;
       if(fresh) beginRun(!!options.practice); active=true;audio.setActive(true); startedAt=performance.now(); resetInput(); emit(); const result=canvas.requestPointerLock?.(); result?.catch?.(()=>{}); },
+    returnToTitle() { pause(); beginRun(true); practice=false; gamePhase="title"; emit(); },
     pause, restart, attack, holdStandoff, guard, parry, dodge, toggleSword, setStance,
     /* a fighter on demand, for practice and tests */
     spawnEnemy(type,options){ return pool.spawn(type,options); },

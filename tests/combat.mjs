@@ -352,3 +352,18 @@ console.log('PASS: title entry starts a fresh run after a paused fight.');
   }
 }
 console.log('PASS: all 16 stance matchups deal the correct damage and stagger; only Water bypasses shield blocks.');
+
+/* A title return clears actors and resets both visible and physical spawn. */
+{
+  const {game,player}=await world();game.start({practice:true});
+  game.setKey('KeyW',true);step(game,60);game.setKey('KeyW',false);
+  game.spawnEnemy('brute');game.setStance('moon');game.look(1);
+  game.returnToTitle();step(game,1);
+  const s=game.getState();assert.equal(s.phase,'title');assert.equal(s.active,false);
+  assert.equal(s.enemies.length,0);assert.equal(s.stance,'stone');assert.equal(player.visible,false);
+  near(game.position.z,7,.001,'title resets the player position');
+  game.start();step(game,2);
+  near(game.position.z,7,.02,'physics stays at the reset spawn');assert.equal(player.visible,true);
+  game.dispose();
+}
+console.log('PASS: returning to title clears enemies, hides the player, and resets the physical spawn.');

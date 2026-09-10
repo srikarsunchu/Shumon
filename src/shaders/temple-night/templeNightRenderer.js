@@ -4,11 +4,12 @@
 /* Exact included world sections SHA-256: b95f0f2d7824af6890e4f4a779376aa3ad75d7fdf01a70c742f3241c9970160d */
 /* Deliberately excluded: HTML page UI, chapter card viewports, cloth cards, generated page images, and the subset-font wordmark. */
 import * as THREE from "three";
+import { buildEnvironment } from "./templeEnvironment.js";
 import { buildLandscape } from "./templeLandscape.js";
 
 // Gameplay extension hooks are local; authored world construction remains intact.
 export function createTempleNightRenderer(canvas, createGameplay) {
-let gameplay, landscape;
+let gameplay, landscape, environment;
 /* ------------------------------------------------------------ 0 · basics */
 const Q      = new URLSearchParams(location.search);
 const qs     = (k, d) => { const v = Q.get(k); return v === null ? d : v; };
@@ -2400,6 +2401,7 @@ function updateWorld(dt) {
     m.visible = a > .006;
   });
   landscape?.update(clock, gameplay?.position);
+  environment?.update(clock);
   /* Game hook: WORLD.grade = { hit, standoff } (0..1, driven by gameplay).
      hit → a brief exposure dip and desaturation; standoff → a deeper
      vignette. At 0 the grade is exactly the authored one. */
@@ -2540,6 +2542,7 @@ try {
   buildWisps();
   if (createGameplay && WISP.mesh) WISP.mesh.visible = false;
   initPost();
+  environment = buildEnvironment(scene, WORLD, POST, LOW);
   gameplay = createGameplay?.({ scene, camera, canvas, wind: landscape.wind, grade: WORLD.grade });
   WORLD.fg.forEach(m => m.layers.set(1));
   /* Game hook: rain, leaves and ripples stay in game mode — they are the

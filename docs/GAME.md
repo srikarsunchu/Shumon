@@ -132,3 +132,23 @@ stance glyphs 石 水 風 月, wave counter, target health), standoff prompt,
 banners, damage vignette, pause, death card, victory card with kills,
 time and perfect standoffs. Every string lives in one place
 (`src/shaders/temple-night/copy.ts`).
+
+## Environment pass
+
+`templeEnvironment.js` owns the foreground composition and material overrides;
+the generated renderer calls it only through its game extension hooks. The
+court uses weathered paving with broad damp patches; finite, feathered puddles
+own the small rain rings. Grain and bloom are reduced. Ground sits farther
+below the paving to avoid nearly coincident surfaces. The surrounding soil
+has broad moss variation and grass grows in clumps with bare pockets.
+
+A fixed set of branching trees, exposed roots, leaf litter, weathered rock
+formations and broken edging frames the open fighting lane. Nearby rocks use
+smoother normals; new formations have varied profiles and moss-tinted tops.
+Contact shading follows the terrain and lantern falloff stays close to the
+lamps. Leaves are instanced and the low preset reduces canopy/litter density.
+All geometry and textures are generated locally; there are no new downloads.
+
+Returning to title clears the enemy pool, hides the player, and resets camera,
+stance, and physics to the starting view. Restart also resets the physical
+spawn instead of retaining the previous run's position.

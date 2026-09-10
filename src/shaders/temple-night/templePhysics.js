@@ -28,6 +28,7 @@ export async function createTemplePhysics(solids, start) {
   world.step();
   let falling=0;
   return {
+    reset(start) { const p={x:start.x,y:start.y+.86,z:start.z}; body.setTranslation(p,true); body.setNextKinematicTranslation(p); falling=0; },
     move(dx,dz,dt,out) {
       if(dt<=0) return;
       falling=controller.computedGrounded()?-1:Math.max(-18,falling-20*dt);
