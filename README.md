@@ -6,9 +6,9 @@
 
 Desktop · keyboard and mouse · no installation · built with Three.js, React, and Rapier.
 
-[![Edited gameplay preview: woodland approach and combat at the temple gate](docs/media/gameplay-preview.gif)](https://shumon.xyz)
+[![Shumon: the lantern-lit woodland approach to the temple](docs/media/shumon-preview.jpg)](https://shumon.xyz)
 
-*Edited sequence of actual in-game captures; not continuous footage. Click to play.*
+*In-game screenshot. Click to play Shumon in your browser.*
 
 [Run locally](#run-locally) · [Controls](#controls) · [How it works](#how-it-works) · [Asset credits](#asset-credits) · [License](#license)
 
