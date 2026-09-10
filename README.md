@@ -6,9 +6,9 @@
 
 Desktop · keyboard and mouse · no installation · built with Three.js, React, and Rapier.
 
-[![Shumon: the lantern-lit woodland approach to the temple](docs/media/shumon-preview.jpg)](https://shumon.xyz)
+[![Real-time gameplay: the woodland approach to Shumon](docs/media/gameplay-preview.gif)](https://github.com/srikarsunchu/Shumon/raw/refs/heads/master/docs/media/shumon-gameplay.mp4)
 
-*In-game screenshot. Click to play Shumon in your browser.*
+*Actual canvas recording. [Watch / download the 20-second gameplay video](https://github.com/srikarsunchu/Shumon/raw/refs/heads/master/docs/media/shumon-gameplay.mp4) · [Play in your browser](https://shumon.xyz).*
 
 [Run locally](#run-locally) · [Controls](#controls) · [How it works](#how-it-works) · [Asset credits](#asset-credits) · [License](#license)
 
