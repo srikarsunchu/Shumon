@@ -122,19 +122,8 @@ export function buildPalace(scene,world) {
   for(const x of [-1.85,-1.45]) {const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.09,.055,.08,14),ink);bowl.position.set(x,F+.79,-46.7);bowl.userData.noCollision=true;root.add(bowl);}
   function lantern(x,z,y=F+2.5){box('Lantern cap',.52,.08,.52,x,y+.38,z,beam,false);box('Lantern shade',.4,.65,.4,x,y,z,paper,false);box('Lantern base',.52,.08,.52,x,y-.38,z,beam,false);const light=new THREE.PointLight(0xffc58d,.85,8,2);light.position.set(x,y,z);root.add(light);}
   lantern(-4.6,-44);lantern(4.6,-44);lantern(-10.7,-42);lantern(10.7,-42);lantern(-3,-46.5);
-  // A narrow, meandering approach replaces the anonymous walk across the field.
-  const path=new THREE.PlaneGeometry(3.2,76,8,152);path.rotateX(-Math.PI/2);const p=path.attributes.position;
-  for(let i=0;i<p.count;i++){const z=p.getZ(i)+46,x=p.getX(i)+Math.sin(z*.21)*1.1+Math.sin(z*.07)*.9;p.setXYZ(i,x,Math.max(.018,terrainHeight(x,z)+.016),z);}path.computeVertexNormals();
-  const trail=new THREE.Mesh(path,new THREE.MeshPhysicalMaterial({color:0x15130e,roughness:1,specularIntensity:0,transparent:true,depthWrite:false}));trail.material.onBeforeCompile=shader=>{
-    shader.vertexShader='varying vec2 vTrail;\n'+shader.vertexShader;
-    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvTrail=uv;');
-    shader.fragmentShader='varying vec2 vTrail;\n'+shader.fragmentShader;
-    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-      float edgeNoise=.025*sin(vTrail.y*170.)+.015*cos(vTrail.y*390.);
-      diffuseColor.a*=smoothstep(0.,.18,vTrail.x+edgeNoise)*(1.-smoothstep(.82,1.,vTrail.x+edgeNoise))*smoothstep(0.,.08,vTrail.y);
-      diffuseColor.rgb*=.85+.12*sin(vTrail.x*8.+vTrail.y*70.)*cos(vTrail.y*90.);`);
-  };trail.name='Forest approach';trail.userData.noCollision=true;trail.receiveShadow=true;scene.add(trail);
-  for(const [x,z] of [[-3,75],[3.5,62],[-3,49],[3.5,36],[-3,23]]) {const y=terrainHeight(x,z);box('Path marker',.2,1.1,.2,x,y+.55,z,beam);box('Path lantern',.32,.4,.32,x,y+1.12,z,paper,false);const l=new THREE.PointLight(0xffba78,.65,5,2);l.position.set(x,y+1.2,z);scene.add(l);}
+  // The woodland path is blended directly into the landscape soil material.
+  for(const [x,z] of [[-3,75],[3.5,62],[-3,49],[3.5,36],[-3,23]]) {const y=terrainHeight(x,z);box('Path marker',.2,1.1,.2,x,y+.55,z,beam);box('Path lantern',.32,.4,.32,x,y+1.12,z,paper,false);for(const offset of [-.24,.24])box('Path lantern cap',.45,.07,.45,x,y+1.12+offset,z,beam,false);for(const dx of [-.17,.17])for(const dz of [-.17,.17])box('Lantern timber frame',.035,.42,.035,x+dx,y+1.12,z+dz,beam,false);const l=new THREE.PointLight(0xffba78,.65,5,2);l.position.set(x,y+1.2,z);scene.add(l);}
   return {doors,setClaimed(v){prize.visible=!v;if(!v){root.attach(bag);bag.position.set(4.6,F+.35,-46);bag.rotation.set(0,0,0);}},setStory(v){story=v;},giveBag(rig){rig.joints.leftForearm.add(bag);bag.position.set(0,-.35,0);},update(dt,player){const inside=player.y>6 && player.z<-39.9 && player.z>-48.2 && Math.abs(player.x)<14.5;if(world.rain)world.rain.visible=!inside;if(world.leaves)world.leaves.mesh.visible=!inside;if(world.hallLight && inside)world.hallLight.intensity*=.4;
     const near=Math.abs(player.x)<3 && Math.abs(player.z+39.72)<4.5 && player.y>6;for(const {hinge,side} of doors)hinge.rotation.y=THREE.MathUtils.damp(hinge.rotation.y,((near && story!=='duel') || story==='departure' || story==='challenger')?side*1.45:0,3,dt);}};
 }

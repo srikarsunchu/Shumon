@@ -150,7 +150,8 @@ formations and broken edging frames the open fighting lane. Nearby rocks use
 smoother normals; new formations have varied profiles and moss-tinted tops.
 Contact shading follows the terrain and lantern falloff stays close to the
 lamps. Leaves are instanced and the low preset reduces canopy/litter density.
-All geometry and textures are generated locally; there are no new downloads.
+The courtyard kit is generated locally. The woodland soil now uses bundled
+CC0 scans, as described below.
 
 Returning to title clears the enemy pool, hides the player, and resets camera,
 stance, and physics to the starting view. Restart also resets the physical
@@ -197,3 +198,20 @@ pause with the simulation. Restart resets the display, bag, NPCs, and journey.
 State adds `story`, `storyTime`, and `interaction`; enemies expose `stance`.
 `interact()` is proximity-gated and can claim the sword only once. Standalone
 `journey:false` combat retains the original three-wave victory contract.
+
+## Woodland ground materials
+
+`templeGround.js` blends two locally bundled CC0 Poly Haven scans on one
+terrain mesh: leaf-litter soil and compacted dirt. Colour maps are 2048 px;
+normal and AO/roughness maps are 1024 px. The six WebP assets total about
+4.1 MiB. Source URLs, checksums and credits live in `public/assets/ground`
+and `public/assets/CREDITS.md`. Runtime has no third-party texture requests.
+
+The old transparent path overlay and sinusoidal grit have been removed.
+The new path blends colour, normal relief and roughness at a ragged edge;
+world-space UVs preserve a 2.1-metre capture scale. Broad variation breaks up
+repetition. Grass uses curved ribbons in varied tufts, clustered most densely
+around the route and tapered into the forest. Wind and player bending remain.
+Grass patches have explicit culling bounds and progressively fewer instances
+at distance. Low quality uses fewer tufts and five blades instead of seven.
+Small stones, fallen twigs and grounded leaf litter add detail at the shoulder.

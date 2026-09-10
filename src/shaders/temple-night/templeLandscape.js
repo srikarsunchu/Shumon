@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createForestSoil,grassTuftGeometry,scatterPathEdges} from './templeGround.js';
 /* The grounds outside the court. Everything here is tuned to sit with the
    renderer's night: fog 0x050a0e, a blue-white moon key (0xb6dbe4 @ 1.22), the
    blood moon's red rim and the lanterns' 0xff5a24. Albedos are kept low —
@@ -27,13 +28,13 @@ export function terrainHeight(x,z) {
 }
 /* the walking path: from the torii (0, -8.6) through the spawn (0, 7) and on
    toward the near edge, wandering a little and varying in width */
-function pathCentre(z){return Math.sin(z*.21)*1.1+Math.sin(z*.07)*.9;}
-function pathHalfWidth(z){return 2.2+.6*Math.sin(z*.33+1.3);}
+export function pathCentre(z){return Math.sin(z*.21)*1.1+Math.sin(z*.07)*.9;}
+export function pathHalfWidth(z){return 1.35+.25*Math.sin(z*.33+1.3);}
 function pathAmount(x,z) {
   if(z<-9)return 0;
   const d=Math.abs(x-pathCentre(z)),w=pathHalfWidth(z);
   /* (smoothstep needs min < max: written as 1 - rising edge) */
-  return (1-THREE.MathUtils.smoothstep(d,w-.5,w+1.3))*(1-THREE.MathUtils.smoothstep(z,84,90));
+  return (1-THREE.MathUtils.smoothstep(d,w-.3,w+.9))*(1-THREE.MathUtils.smoothstep(z,84,90));
 }
 
 /* sky: 'sky' is the renderer's authored plane (stars, cloud, valley glow); its
@@ -78,13 +79,11 @@ export function buildLandscape(scene, low=false, sky=null) {
   buildTreeline(scene, rnd);
   const wind={time:{value:0},strength:{value:.7},direction:{value:new THREE.Vector2(.9,.35)},player:{value:new THREE.Vector3()}};
 
-  /* ---- ground: dark blue-green with a dusty, warmer path. Albedos are tiny
-     on purpose: in this pipeline (moon key 1.22 + 0.52, exposure .62, gamma)
-     a flat 0x0d1816 already displays at ~85/255; 0x040806 sits around 40,
-     which is where the court's wet stone lives. */
+  /* Moonlit colour modulation sits over locally bundled forest-floor scans.
+     UVs use the source capture width (2.1 metres), independent of terrain size. */
   const terrain=new THREE.PlaneGeometry(164,230,132,184); terrain.rotateX(-Math.PI/2); terrain.translate(0,0,10);
   const p=terrain.attributes.position,colors=[];
-  const ground=new THREE.Color(0x040806),moss=new THREE.Color(0x050803),pathC=new THREE.Color(0x1c1712),c=new THREE.Color();
+  const ground=new THREE.Color(0x27372a),moss=new THREE.Color(0x1c2d22),pathC=new THREE.Color(0x3b4136),c=new THREE.Color();
   for(let i=0;i<p.count;i++) {
     const x=p.getX(i),z=p.getZ(i); p.setY(i,terrainHeight(x,z)-.08);
     c.copy(ground).lerp(moss,Math.max(0,Math.sin(x*.09+1)*Math.cos(z*.07)+.4*Math.sin(x*.31)*Math.sin(z*.27+1))*.8);
@@ -92,21 +91,10 @@ export function buildLandscape(scene, low=false, sky=null) {
     c.multiplyScalar(.82+rnd()*.28); colors.push(c.r,c.g,c.b);
   }
   terrain.setAttribute('color',new THREE.Float32BufferAttribute(colors,3)); terrain.computeVertexNormals();
-  /* Physical with specularIntensity 0: at grazing angles the moon key put a
-     grey specular sheen over the whole field that no albedo could get under.
-     (It must stay a StandardMaterial — templeGameplay.js only builds physics
-     colliders for meshes whose material isMeshStandardMaterial.) */
-  const groundMesh=new THREE.Mesh(terrain,new THREE.MeshPhysicalMaterial({vertexColors:true,roughness:1,specularIntensity:0})); groundMesh.receiveShadow=true;
-  groundMesh.material.onBeforeCompile=shader=>{
-    shader.vertexShader='varying vec3 vSoil;\n'+shader.vertexShader;
-    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvSoil=position;');
-    shader.fragmentShader='varying vec3 vSoil;\n'+shader.fragmentShader;
-    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-      float soilPatch=sin(vSoil.x*.8+sin(vSoil.z*.4))*cos(vSoil.z*.9);
-      float grit=sin(vSoil.x*29.)*sin(vSoil.z*31.);
-      diffuseColor.rgb*=.86+.18*soilPatch+.035*grit;
-      diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.8,1.14,.78),smoothstep(.2,.8,soilPatch)*.5);`);
-  };
+  const terrainUV=terrain.attributes.uv;for(let i=0;i<p.count;i++)terrainUV.setXY(i,p.getX(i)/2.1,p.getZ(i)/2.1);
+  /* Standard-derived material keeps terrain in the collision mesh collector.
+     Restrained specular and roughness maps avoid a uniform grey sheen. */
+  const groundMesh=new THREE.Mesh(terrain,createForestSoil());groundMesh.name='Scanned forest soil and worn path';groundMesh.receiveShadow=true;
   scene.add(groundMesh);
 
   function bend(material, amplitude) {
@@ -125,32 +113,50 @@ export function buildLandscape(scene, low=false, sky=null) {
   }
   const dummy=new THREE.Object3D();
 
-  /* ---- grass: dark at the root, cooler at the tip; blades near the lantern
-     rows carry a warm tint so the lamps seem to reach into the grass */
-  const grassGeo=new THREE.PlaneGeometry(.13,.55,1,3); grassGeo.translate(0,.275,0);
-  const gp=grassGeo.attributes.position,gc=[],root=new THREE.Color(0x030504),tip=new THREE.Color(0x122c24);
-  for(let i=0;i<gp.count;i++) { const t=gp.getY(i)/.55; gp.setX(i,gp.getX(i)*(1-t*.95)); c.copy(root).lerp(tip,t*t); gc.push(c.r,c.g,c.b); }
-  grassGeo.setAttribute('color',new THREE.Float32BufferAttribute(gc,3));
-  const grassMat=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:1,side:THREE.DoubleSide}); bend(grassMat,.32);
-  const count=low?8000:24000;
-  const grass=new THREE.InstancedMesh(grassGeo,grassMat,count); grass.userData.noCollision=true; grass.receiveShadow=true;
-  const warm=new THREE.Color(1.55,.92,.55),plain=new THREE.Color();
-  let n=0;
-  for(let i=0;i<count*12 && n<count;i++) {
-    /* two thirds of the blades go where the player walks, the rest thin out
-       toward the ring */
-    const near=rnd()<.75, x=(rnd()-.5)*(near?90:130), z=near?rnd()*144-44:rnd()*180-78;
-    if((Math.abs(x)<12 && z<16) || (Math.abs(x)<22 && z < -32)) continue;
-    if(pathAmount(x,z)>.15) continue;
-    // Broad clumps and bare pockets, with small gaps around each root.
-    const density=.35+.3*Math.sin(x*.47+Math.sin(z*.2))*Math.cos(z*.39);
-    if(rnd()>density) continue;
-    dummy.position.set(x,terrainHeight(x,z),z); dummy.rotation.set(0,rnd()*Math.PI,0); dummy.scale.setScalar(.55+rnd()*.7); dummy.updateMatrix(); grass.setMatrixAt(n,dummy.matrix);
-    const nearLanterns=Math.abs(x)>11.5&&Math.abs(x)<19&&z>-27&&z<3;
-    plain.setScalar(.85+rnd()*.3);
-    grass.setColorAt(n++, nearLanterns&&rnd()<.4 ? plain.multiply(warm) : plain);
+  /* Concentrate multi-blade tufts on the approach, then thin into the woods.
+     Separate six-metre patches let the renderer cull ground outside the view. */
+  const grassMat=new THREE.MeshPhysicalMaterial({color:0xa2ad93,vertexColors:true,roughness:1,specularIntensity:0,side:THREE.DoubleSide});
+  bend(grassMat,.5);
+  const originalCompile=grassMat.onBeforeCompile;
+  grassMat.onBeforeCompile=shader=>{originalCompile(shader);
+    shader.vertexShader=shader.vertexShader.replace('vec2 away = instanceOrigin.xz-uPlayer.xz;',`float distanceFade=1.-smoothstep(32.,58.,distance(instanceOrigin.xyz,cameraPosition));
+      transformed.y*=distanceFade;
+      vec2 away = instanceOrigin.xz-uPlayer.xz;`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_begin>',`#include <normal_fragment_begin>
+      normal=normalize(normal*faceDirection);`);
+  };
+  grassMat.customProgramCacheKey=()=> 'shumon-tuft-wind-v1';
+  const tuft=grassTuftGeometry(rnd,low?5:7),grassPatches=[];
+  const tintGrass=new THREE.Color();
+  for(let section=0;section<13;section++){
+    const z0=16+section*6;
+    for(const side of [-1,1]){
+      const cap=low?340:850,geometry=tuft.clone(),mesh=new THREE.InstancedMesh(geometry,grassMat,cap);let n=0;
+      const patchCentre=new THREE.Vector3(pathCentre(z0+3)+side*10.2,terrainHeight(side*10.2,z0+3)+.3,z0+3);
+      geometry.boundingSphere=new THREE.Sphere(patchCentre,14);mesh.frustumCulled=true;
+      for(let tries=0;tries<cap*8 && n<cap;tries++){
+        const z=z0+rnd()*6,edge=pathHalfWidth(z),d=edge-.2+.25*Math.sin(z*2.7)*Math.cos(z*.6)+Math.pow(rnd(),3)*18;
+        const x=pathCentre(z)+side*d;
+        const patch=.7+.22*Math.sin(x*1.3+Math.sin(z*.8))*Math.cos(z*1.4);
+        if(rnd()>patch || (Math.abs(x)<12 && z<17))continue;
+        const shoulder=THREE.MathUtils.smoothstep(d,edge-.2,edge+1.4);
+        const scale=(.48+rnd()*.72)*(.4+.6*shoulder);
+        dummy.position.set(x,terrainHeight(x,z)-.065,z);dummy.rotation.set(0,rnd()*Math.PI*2,0);
+        dummy.scale.set(scale,scale*(.75+rnd()*.55),scale);dummy.updateMatrix();mesh.setMatrixAt(n,dummy.matrix);
+        tintGrass.setRGB(.8+rnd()*.3,.82+rnd()*.25,.72+rnd()*.25);mesh.setColorAt(n++,tintGrass);
+      }
+      mesh.count=n;grassPatches.push({mesh,count:n,centre:patchCentre});mesh.name='Approach grass clumps';mesh.userData.noCollision=true;mesh.receiveShadow=true;mesh.instanceMatrix.needsUpdate=true;scene.add(mesh);
+    }
   }
-  grass.count=n; grass.instanceMatrix.needsUpdate=true; grass.instanceColor.needsUpdate=true; scene.add(grass);
+  tuft.dispose();
+  scatterPathEdges(scene,terrainHeight,pathCentre,pathHalfWidth,rnd,low);
+  const farCount=low?2200:6500,far=new THREE.InstancedMesh(grassTuftGeometry(rnd,3),grassMat,farCount);let farN=0;
+  for(let i=0;i<farCount*8 && farN<farCount;i++){
+    const x=(rnd()-.5)*110,z=rnd()*155-62;
+    if((Math.abs(x)<12 && z<17)||(Math.abs(x)<22 && z<-32)||pathAmount(x,z)>.2 || (z>16 && Math.abs(x-pathCentre(z))<19))continue;
+    dummy.position.set(x,terrainHeight(x,z)-.065,z);dummy.rotation.set(0,rnd()*6.28,0);dummy.scale.setScalar(.7+rnd()*.8);dummy.updateMatrix();far.setMatrixAt(farN++,dummy.matrix);
+  }
+  far.count=farN;far.name='Woodland grass';far.userData.noCollision=true;far.receiveShadow=true;far.instanceMatrix.needsUpdate=true;scene.add(far);
 
   /* ---- trees: a trunk and a crown of three offset lobes, darker underneath.
      The lobes share vertex colours; each tree tints them a little. */
@@ -225,6 +231,6 @@ export function buildLandscape(scene, low=false, sky=null) {
   scene.add(new THREE.HemisphereLight(0x1c3140,0x040608,.16));
   return {
     wind,
-    update(time,player) {wind.time.value=time;wind.strength.value=.6+.35*Math.sin(time*.24)+.18*Math.sin(time*.63);if(player)wind.player.value.copy(player);},
+    update(time,player) {wind.time.value=time;wind.strength.value=.6+.35*Math.sin(time*.24)+.18*Math.sin(time*.63);if(player){wind.player.value.copy(player);for(const patch of grassPatches){const d=patch.centre.distanceTo(player);patch.mesh.visible=d<68;patch.mesh.count=Math.round(patch.count*(1-.7*THREE.MathUtils.smoothstep(d,14,48)));}}},
   };
 }

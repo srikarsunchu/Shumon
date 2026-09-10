@@ -17,3 +17,14 @@ No Ghost of Tsushima models, recordings, or animations are used.
 Temple, armor, terrain, vegetation, sky, and effects are procedural project content.
 Rain, wind, footsteps, and sword sounds are synthesized in the browser.
 Rapier physics: Apache-2.0; Three.js: MIT (see installed dependency licenses).
+
+## Scanned forest ground
+Forest Floor and Dirt Floor by eye-candy.xyz / Poly Haven — CC0 1.0 Universal.
+- https://polyhaven.com/a/forest_floor
+- https://polyhaven.com/a/dirt_floor
+- License: https://polyhaven.com/license
+
+Locally bundled colour (2048 px), OpenGL normal (1024 px), and packed
+ambient-occlusion/roughness/metalness maps (1024 px), converted from the source
+JPEG maps to WebP. Original URLs and checksums: `ground/sources.json`.
+Grass tufts and the soil blending shader are original procedural project content.

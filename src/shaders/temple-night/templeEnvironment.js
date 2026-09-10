@@ -51,7 +51,7 @@ export function buildEnvironment(scene,world,post,low=false) {
     for(let k=0;k<5;k++){const a=k*1.25;branch(base.clone().add(new THREE.Vector3(0,.18,0)),new THREE.Vector3(x+Math.cos(a)*1.2*s,y+.02,z+Math.sin(a)*1.2*s),.12,.018);}
   });
   // Leaf litter gathers at grove roots and paving margins, never evenly across the arena.
-  for(let i=0;i<(low?450:900);i++){const [x,z]=GROVES[i%GROVES.length],a=rnd()*6.28,r=rnd()*3;const px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;dummy.position.set(px,Math.max(.008,terrainHeight(px,pz)+.015),pz);dummy.rotation.set(0,rnd()*6,.02);dummy.scale.setScalar(.55+rnd()*.35);dummy.updateMatrix();if(leafN<leaves.instanceMatrix.count){leaves.setMatrixAt(leafN,dummy.matrix);leaves.setColorAt(leafN++,new THREE.Color(0x51372b));}}
+  for(let i=0;i<(low?450:900);i++){const [x,z]=GROVES[i%GROVES.length],a=rnd()*6.28,r=rnd()*3;const px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;dummy.position.set(px,Math.max(.008,terrainHeight(px,pz)-.063),pz);dummy.rotation.set(0,rnd()*6,.02);dummy.scale.setScalar(.55+rnd()*.35);dummy.updateMatrix();if(leafN<leaves.instanceMatrix.count){leaves.setMatrixAt(leafN,dummy.matrix);leaves.setColorAt(leafN++,new THREE.Color(0x51372b));}}
   leaves.count=leafN;leaves.instanceMatrix.needsUpdate=true;
   // Varied, weathered rock profiles with rounded subdivisions and broad strata.
   const rocks=Array.from({length:5},(_,i)=>{const g=new THREE.SphereGeometry(1,12,8),p=g.attributes.position;for(let k=0;k<p.count;k++){const x=p.getX(k),y=p.getY(k),z=p.getZ(k),r=1+.18*Math.sin(x*3+i)*Math.cos(z*4+i)+.1*Math.sin(y*8+i);p.setXYZ(k,x*r+.15*y,Math.max(-.72,y*(.7+.22*Math.sin(x*3+i))+.12*Math.sin(z*4+i)*Math.cos(x*3)),z*r);}g.computeVertexNormals();return g;});
