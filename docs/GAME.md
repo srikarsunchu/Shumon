@@ -55,6 +55,21 @@ wave 1 on either end card. Target total time 3–5 minutes.
 - Hit reactions: player and enemies play `Hit_Chest` (or `Hit_Head` on a
   parry stagger). Death: `Death01`, body fades after 2.5 s.
 
+## Weapons and stance motion
+
+Enemy equipment is attached to the same skinned fighter rigs: swordsmen carry
+katanas, shieldmen carry a katana and iron-rimmed plank shield, spearmen carry
+a long yari, and brutes carry a studded kanabo. Pole weapons stay in hand
+through the standoff and do not show a sword scabbard. Spearmen thrust toward
+the player; shieldmen keep the shield raised; brutes put their weight into the cut.
+
+The four player cuts retain the Quaternius animation as their base. Stone uses
+the direct library cut, Water reverses it into a returning cut, Wind combines
+the reverse with a rising diagonal, and Moon adds a broad torso sweep. These
+are directional adaptations of the existing clip, not four new captured clips.
+The blade paths differ inside the shared damage window; stance bonuses and
+cut timing remain as specified above.
+
 ## Standoff
 
 At the start of every wave the lead enemy stops 6 m from the player, both

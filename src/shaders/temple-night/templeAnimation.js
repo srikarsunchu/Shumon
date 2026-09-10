@@ -87,7 +87,11 @@ export async function loadAuthoredMotion(samurai, data) {
       for(const [name,weight] of Object.entries(weights)) actions[name].setEffectiveWeight(weight*(1-attack)*(1-reactW));
       const cycle=((s.phase||0)/(2*Math.PI))%1;
       for(const name of LOCO) { const d=clips[name].duration; actions[name].time=(((cycle*d+origin[name])%d)+d)%d; }
-      actions.Sword_Attack.time=(tell>=0?tell*TELL:Math.max(0,s.swing))*clips.Sword_Attack.duration;
+      // Reverse the captured cut for the rising and returning attacks. The
+      // blend envelope still starts and ends at idle; no authored pose clips.
+      let cutTime=tell>=0?tell*TELL:Math.max(0,s.swing);
+      if(s.stance==='water' || s.stance==='wind') cutTime=.65-.6*THREE.MathUtils.smoothstep(cutTime,.1,.65);
+      actions.Sword_Attack.time=cutTime*clips.Sword_Attack.duration;
       actions.Sword_Attack.setEffectiveWeight(attack*(1-reactW));
       for(const name of Object.keys(REACT_CLIPS)) {
         const a=actions[name];

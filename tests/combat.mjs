@@ -257,6 +257,20 @@ console.log('PASS: three waves cleared yields result.won and the victory phase.'
   assert(spread(dead,held)<5e-3 && Math.abs(dead.hips.y-held.hips.y)<1e-6,'Death01 holds its last frame past t=1');
   const roll=pose({react:{clip:'Roll',t:.45}});
   assert(spread(base,roll)>.5,'the roll turns the body over');
+  const {applyCombatStyle}=await import('../src/shaders/temple-night/templeWeapons.js');
+  const paths=[];
+  for(const stance of ['stone','water','wind','moon']) {
+    const path=[];
+    for(const swing of [.3,.45,.6]) {
+      const state={...idle,drawn:true,stance,swing};
+      samurai.update(0,state); motion.update(0,state); applyCombatStyle(samurai,state);
+      samurai.group.updateMatrixWorld(true);
+      path.push(samurai.katana.localToWorld(new THREE.Vector3(0,0,-.72)));
+    }
+    paths.push(path);
+  }
+  for(let a=0;a<paths.length;a++) for(let b=a+1;b<paths.length;b++)
+    assert(paths[a].some((point,i)=>point.distanceTo(paths[b][i])>.25),'stance blade paths differ during the damage window');
   const after=pose({});
   assert(spread(base,after)<5e-3 && Math.abs(base.hips.y-after.hips.y)<1e-6,'a reaction over leaves the idle untouched');
   pose({dodge:true},1/60); const dodge=pose({dodge:true},1/60); pose({},1/60);
@@ -281,6 +295,13 @@ console.log('PASS: Hit_Chest, Hit_Head and the tell move the joints; Death01 hol
   const { PALETTES }=await import('../src/shaders/temple-night/templeSamurai.js');
   const { game }=await world(); game.start({practice:true});
   const brute=game.spawnEnemy('brute',{x:0,z:4}), sword=game.spawnEnemy('swordsman',{x:2,z:4});
+  const spear=game.spawnEnemy('spearman',{x:4,z:4}), shield=game.spawnEnemy('shieldman',{x:6,z:4});
+  step(game,1);
+  assert(brute.rig.group.getObjectByName('kanabo'),'brute carries a club');
+  assert(spear.rig.group.getObjectByName('yari'),'spearman carries a spear');
+  assert(shield.rig.group.getObjectByName('shield'),'shieldman carries a shield');
+  assert(!spear.rig.saya.visible && !brute.rig.saya.visible,'pole weapons have no sword scabbard');
+  assert(spear.rig.katana.visible && brute.rig.katana.visible,'pole weapons remain visible');
   assert.equal(brute.rig.palette,'iron'); assert.equal(sword.rig.palette,'raider'); assert(PALETTES.sakai && PALETTES.iron && PALETTES.raider && PALETTES.ash);
   near(brute.group.scale.x,1.12,1e-9,'the brute stands larger');
   assert(brute.rig.mask && brute.rig.hat,'masked, under a hat');

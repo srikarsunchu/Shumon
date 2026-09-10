@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { applyCombatStyle } from './templeWeapons.js';
 import { createSamurai } from './templeSamurai.js';
 import { createTemplePhysics } from './templePhysics.js';
 import { loadAuthoredMotion, createFootPlant } from './templeAnimation.js';
@@ -393,11 +394,12 @@ export function createTempleGameplay({ scene, camera, canvas, wind, grade, clips
     /* frame order: rig cycle → Quaternius retarget → pose-clip layers →
        foot IK → skinned body → sword trail → camera */
     const attackClip=swing>0 && poseClips.has(`attack_${stance}`) ? `attack_${stance}` : null;
-    const pose={speed:gaitSpeed/5.6,run:clamp((gaitSpeed-2.8)/2.8,0,1),turnLean,phase,drawn,wind:wind?.strength.value ?? 1,swing:attackClip?-1:swingT,time,dodge:dodgeT>0,
+    const pose={stance,speed:gaitSpeed/5.6,run:clamp((gaitSpeed-2.8)/2.8,0,1),turnLean,phase,drawn,wind:wind?.strength.value ?? 1,swing:attackClip?-1:swingT,time,dodge:dodgeT>0,
       /* the library's reactions (templeAnimation.js): the dodge is the roll, a hit Hit_Chest */
       react:dodgeT>0?{clip:'Roll',t:1-dodgeT/DODGE_TIME}:hitReact>0?{clip:'Hit_Chest',t:1-hitReact/HIT_REACT}:null};
     samurai.update(active?dt:0,pose);
     motion?.update(active?dt:0,pose);
+    if(!attackClip) applyCombatStyle(samurai,pose);
     /* the authored layers (plan B4). The attack envelope is the one the
        Quaternius blend uses, so the clip and Sword_Attack never overlap. */
     const move=THREE.MathUtils.smoothstep(gaitSpeed,.1,.8);

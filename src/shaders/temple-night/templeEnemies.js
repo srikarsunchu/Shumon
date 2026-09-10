@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { clone as cloneRig } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { createSamurai } from './templeSamurai.js';
 import { loadAuthoredMotion, createFootPlant, TELL } from './templeAnimation.js';
+import { equipEnemy, applyCombatStyle } from './templeWeapons.js';
 import { loadBody } from './templeBody.js';
 
 /* ===================================================== the gate's fighters
@@ -84,7 +85,7 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
     scene.add(group);
     const y = groundAt(x, z, 0) ?? groundAt(x, z, 1) ?? 0;
     const e = {
-      id: nextId++, type, spec, rig, group, motion: null, body: null, plantFeet: createFootPlant(rig),
+      id: nextId++, type, spec, rig, group, equipment: equipEnemy(rig,type), motion: null, body: null, plantFeet: createFootPlant(rig),
       /* ready: every loader has answered; shown: the first bound frame has been posed and synced */
       ready: false, shown: false, waitT: 0,
       position: new THREE.Vector3(x, y, z), velocity: new THREE.Vector3(), yaw, distance: Infinity,
@@ -209,8 +210,9 @@ export function createEnemyPool({ scene, solids, samuraiFactory = createSamurai,
     if (e.mode === 'dead') react = { clip: 'Death01', t: e.deadT / DEATH_TIME };
     else if (e.mode === 'stagger') { const el = STAGGER_TIME - e.timer; if (el < STAGGER_CLIP) react = { clip: 'Hit_Head', t: el / STAGGER_CLIP }; }
     else if (e.hitT > 0 && e.mode !== 'attack') react = { clip: 'Hit_Chest', t: 1 - e.hitT / HIT_TIME };
-    const pose = { speed: e.gait / 5.6, run: 0, turnLean: 0, phase: e.phase, drawn: e.drawn, wind: 1, swing, telegraph, time: e.time, react: authored ? react : null };
+    const pose = { speed: e.gait / 5.6, run: 0, turnLean: 0, phase: e.phase, drawn: e.drawn, wind: 1, swing, telegraph, weapon: e.type, time: e.time, react: authored ? react : null };
     e.rig.update(dt, pose); e.motion?.update(dt, pose);
+    applyCombatStyle(e.rig,pose); e.equipment.update();
     /* the standoff's twitch is a tell of its own, on either rig; the reel of
        a stagger keeps a little weight in the knees under the clip */
     const J = joints(e);
