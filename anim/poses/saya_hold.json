@@ -1,0 +1,30 @@
+{
+ "name": "saya_hold",
+ "loop": false,
+ "mask": "leftArm",
+ "keys": [
+  {
+   "time": 0,
+   "label": "clamp",
+   "joints": {
+    "l_arm": {
+     "raise": 22,
+     "straddle": 3,
+     "turn": -32
+    },
+    "l_elbow": {
+     "bend": 96
+    },
+    "l_wrist": {
+     "bend": 16,
+     "tilt": -12
+    }
+   }
+  },
+  {
+   "time": 1.0,
+   "label": "clamp",
+   "use": "saya_hold#0"
+  }
+ ]
+}

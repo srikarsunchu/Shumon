@@ -1,0 +1,135 @@
+{
+ "name": "attack_stone",
+ "loop": false,
+ "mask": "full",
+ "keys": [
+  {
+   "time": 0,
+   "label": "chudan",
+   "use": "stance_stone_idle#0"
+  },
+  {
+   "time": 0.2,
+   "label": "windup",
+   "use": "stance_stone_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 90,
+     "straddle": 10,
+     "turn": 0
+    },
+    "r_elbow": {
+     "bend": 92
+    },
+    "l_arm": {
+     "raise": 86,
+     "straddle": 4,
+     "turn": -10
+    },
+    "l_elbow": {
+     "bend": 98
+    },
+    "torso": {
+     "bend": -8
+    },
+    "body": {
+     "bend": -2
+    },
+    "head": {
+     "nod": -6
+    }
+   }
+  },
+  {
+   "time": 0.38,
+   "label": "cut",
+   "use": "stance_stone_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 88,
+     "straddle": -2
+    },
+    "r_elbow": {
+     "bend": 28
+    },
+    "l_arm": {
+     "raise": 84,
+     "straddle": 4,
+     "turn": -16
+    },
+    "l_elbow": {
+     "bend": 40
+    },
+    "torso": {
+     "bend": 12
+    },
+    "body": {
+     "bend": 6
+    },
+    "head": {
+     "nod": 4
+    },
+    "l_leg": {
+     "raise": 30
+    },
+    "l_knee": {
+     "bend": 40
+    },
+    "r_leg": {
+     "raise": -18
+    },
+    "r_knee": {
+     "bend": 6
+    }
+   }
+  },
+  {
+   "time": 0.55,
+   "label": "finish",
+   "use": "stance_stone_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 34,
+     "straddle": -4
+    },
+    "r_elbow": {
+     "bend": 20
+    },
+    "l_arm": {
+     "raise": 30,
+     "straddle": 6,
+     "turn": -18
+    },
+    "l_elbow": {
+     "bend": 34
+    },
+    "torso": {
+     "bend": 18
+    },
+    "body": {
+     "bend": 8
+    },
+    "head": {
+     "nod": 6
+    },
+    "l_leg": {
+     "raise": 32
+    },
+    "l_knee": {
+     "bend": 44
+    },
+    "r_leg": {
+     "raise": -20
+    },
+    "r_knee": {
+     "bend": 8
+    }
+   }
+  },
+  {
+   "time": 0.85,
+   "label": "chudan",
+   "use": "stance_stone_idle#0"
+  }
+ ]
+}

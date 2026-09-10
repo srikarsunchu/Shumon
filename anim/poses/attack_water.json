@@ -1,0 +1,15 @@
+{ "name": "attack_water", "loop": false, "mask": "full",
+  "keys": [
+    { "time": 0, "label": "low-right", "use": "stance_water_idle#0" },
+    { "time": 0.2, "label": "pull", "use": "stance_water_idle#0",
+      "joints": { "r_arm": { "raise": -12, "straddle": 42, "turn": 50 }, "r_elbow": { "bend": 42 }, "torso": { "turn": 30 }, "body": { "turn": 14 }, "head": { "turn": -20 } } },
+    { "time": 0.38, "label": "rise", "use": "stance_water_idle#0",
+      "joints": { "r_arm": { "raise": 62, "straddle": 8, "turn": 0 }, "r_elbow": { "bend": 24 }, "r_wrist": { "bend": 0, "tilt": 0 },
+                  "torso": { "turn": -10, "bend": 8 }, "body": { "turn": -6, "bend": 4 }, "head": { "turn": 0 },
+                  "l_leg": { "raise": 34 }, "l_knee": { "bend": 40 }, "r_leg": { "raise": -18 }, "r_knee": { "bend": 6 } } },
+    { "time": 0.55, "label": "across", "use": "stance_water_idle#0",
+      "joints": { "r_arm": { "raise": 108, "straddle": -26, "turn": -32 }, "r_elbow": { "bend": 30 },
+                  "torso": { "turn": -30, "bend": 6 }, "body": { "turn": -14, "bend": 4 }, "head": { "turn": 8 },
+                  "l_leg": { "raise": 30 }, "l_knee": { "bend": 36 }, "r_leg": { "raise": -16 }, "r_knee": { "bend": 8 } } },
+    { "time": 0.85, "label": "low-right", "use": "stance_water_idle#0" }
+  ] }

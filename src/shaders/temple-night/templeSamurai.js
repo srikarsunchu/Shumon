@@ -310,8 +310,10 @@ export function createSamurai(opt) {
   };
 
   /* ---- the skeleton. Forward is −z. Heights in metres, standing. ------ */
-  const HIP_Y = .93;
-  const hips = bone(group, 0, HIP_Y, 0);
+  /* hipY and chestY are the standing rest heights; fitSkeleton() below
+     rewrites them when a loaded body dictates the proportions */
+  let hipY = .93, chestY = .24;
+  const hips = bone(group, 0, hipY, 0);
   const spine = bone(hips, 0, .06, 0);
   const chest = bone(spine, 0, .24, 0);
   const neck = bone(chest, 0, .26, -.01);
@@ -320,7 +322,10 @@ export function createSamurai(opt) {
   /* ---- under-robe and trousers --------------------------------------- */
   const torso = add(spine, new THREE.CylinderGeometry(.195, .175, .34, 20), M.silk, 0, .13, 0);
   torso.scale.z = .78;
-  /* the collar, crossed left over right */
+  /* the yoke of the kimono over the collarbones, and the collar crossed
+     left over right on top of it */
+  const yoke = add(chest, new THREE.CylinderGeometry(.125, .215, .16, 20), M.silk, 0, .20, 0);
+  yoke.scale.z = .8;
   [-1, 1].forEach(s => {
     const lapel = add(chest, new THREE.BoxGeometry(.11, .16, .03), M.silk, s * .055, .17, -.135 + (s < 0 ? -.006 : 0));
     lapel.rotation.z = s * .55;
@@ -333,16 +338,19 @@ export function createSamurai(opt) {
   add(hips, new THREE.BoxGeometry(.05, .12, .05), M.obi, -.07, .01, .175).rotation.z = -.4;
 
   /* ---- the dō: five laced rows rising to the breastplate --------------- */
+  /* the cuirass was flattened front-to-back for the thin procedural torso;
+     over a real chest it deepens instead (see setBodyMode) */
+  const armourParts = [];
   for (let i = 0; i < 5; i++) {
     const t = i / 4;
     const band = add(spine, new THREE.CylinderGeometry(lerp(.215, .25, t), lerp(.21, .245, t), .076, 24), M.band, 0, .04 + i * .074, 0);
-    band.scale.z = .82;
+    band.scale.z = .82; armourParts.push(band);
   }
   /* the breastplate is a solid plate above the rows, carrying the crest */
   const breast = add(chest, new THREE.CylinderGeometry(.235, .252, .10, 24), M.lacquer, 0, .095, 0);
-  breast.scale.z = .82;
+  breast.scale.z = .82; armourParts.push(breast);
   const trim = add(chest, new THREE.CylinderGeometry(.24, .24, .014, 24), M.gold, 0, .148, 0);
-  trim.scale.z = .82;
+  trim.scale.z = .82; armourParts.push(trim);
   const mon = add(chest, new THREE.PlaneGeometry(.10, .10), M.mon, 0, .09, -.207);
   mon.rotation.y = Math.PI; mon.castShadow = false;
   /* shoulder straps in red cord */
@@ -363,12 +371,20 @@ export function createSamurai(opt) {
     tassets.push({ piv: piv, a: a });
   }
 
+  /* the parts a loaded skin replaces (bare flesh, gloves, boots) and the
+     parts that ride the crown, so a body of other proportions can hide the
+     one and lift the other */
+  const skinParts = [], hairParts = [];
+  /* the cloth a loaded body wears over its own limbs, and the gloves and
+     boots it keeps: both are let out in skinned mode so no flesh shows */
+  const clothParts = [torso, yoke], wearParts = [];
+
   /* ---- arms: sleeve, sode, kote, gloved hand -------------------------- */
   const arm = s => {
     const shoulder = bone(chest, s * .215, .18, 0);
     /* the kimono sleeve, full at the upper arm */
     const sleeve = add(shoulder, new THREE.CylinderGeometry(.075, .085, .24, 12), M.silk, 0, -.13, 0);
-    sleeve.scale.z = .9;
+    sleeve.scale.z = .9; clothParts.push(sleeve);
     /* the sode: four plates stepping out and down over the shoulder */
     for (let i = 0; i < 4; i++) {
       const p = add(shoulder, new THREE.BoxGeometry(.19 + i * .012, .048, .17 + i * .01), M.sode, s * (.03 + i * .006), .04 - i * .048, 0);
@@ -378,14 +394,14 @@ export function createSamurai(opt) {
     add(shoulder, new THREE.BoxGeometry(.06, .05, .09), M.gold, s * .035, .085, 0).rotation.z = s * -.4;
     const elbow = bone(shoulder, 0, -.27, 0);
     /* the kote: a fitted sleeve of chain under a lacquered forearm plate */
-    add(elbow, new THREE.CylinderGeometry(.052, .045, .26, 10), M.hakama, 0, -.13, 0);
+    clothParts.push(add(elbow, new THREE.CylinderGeometry(.052, .045, .26, 10), M.hakama, 0, -.13, 0));
     const kote = add(elbow, new THREE.BoxGeometry(.075, .21, .04), M.lacquer, 0, -.13, -.032);
     kote.rotation.x = .04;
     add(elbow, new THREE.BoxGeometry(.08, .012, .05), M.gold, 0, -.04, -.03);
     add(elbow, new THREE.BoxGeometry(.08, .012, .05), M.gold, 0, -.225, -.03);
     const hand = bone(elbow, 0, -.27, 0);
-    add(hand, new THREE.BoxGeometry(.072, .085, .04), M.glove, 0, -.04, 0);
-    add(hand, new THREE.BoxGeometry(.06, .05, .045), M.glove, 0, -.10, -.005);
+    wearParts.push(add(hand, new THREE.BoxGeometry(.072, .085, .04), M.glove, 0, -.04, 0));
+    wearParts.push(add(hand, new THREE.BoxGeometry(.06, .05, .045), M.glove, 0, -.10, -.005));
     return { shoulder: shoulder, elbow: elbow, hand: hand };
   };
   const L = arm(-1), R = arm(1);
@@ -394,17 +410,17 @@ export function createSamurai(opt) {
   const leg = s => {
     const hip = bone(hips, s * .105, -.02, 0);
     const thigh = add(hip, new THREE.CylinderGeometry(.092, .078, .40, 12), M.hakama, 0, -.2, 0);
-    thigh.scale.z = .95;
+    thigh.scale.z = .95; clothParts.push(thigh);
     const knee = bone(hip, 0, -.40, 0);
-    add(knee, new THREE.SphereGeometry(.07, 10, 8), M.hakama, 0, 0, 0);
-    add(knee, new THREE.CylinderGeometry(.068, .06, .40, 12), M.hakama, 0, -.2, 0);
+    clothParts.push(add(knee, new THREE.SphereGeometry(.07, 10, 8), M.hakama, 0, 0, 0));
+    clothParts.push(add(knee, new THREE.CylinderGeometry(.068, .06, .40, 12), M.hakama, 0, -.2, 0));
     /* the shin guard: a lacquered plate with a gold lip, tied behind */
     const shin = add(knee, new THREE.CylinderGeometry(.078, .07, .34, 12, 1, false, Math.PI * .95, Math.PI * 1.1), M.lacquer, 0, -.21, 0);
     shin.rotation.y = 0;
     add(knee, new THREE.BoxGeometry(.11, .012, .06), M.gold, 0, -.05, -.05);
     const foot = bone(knee, 0, -.40, 0);
-    add(foot, new THREE.BoxGeometry(.095, .07, .25), M.glove, 0, -.06, -.045);
-    add(foot, new THREE.BoxGeometry(.10, .03, .26), M.lacquer, 0, -.085, -.045);
+    wearParts.push(add(foot, new THREE.BoxGeometry(.095, .07, .25), M.glove, 0, -.06, -.045));
+    wearParts.push(add(foot, new THREE.BoxGeometry(.10, .03, .26), M.lacquer, 0, -.085, -.045));
     return { hip: hip, knee: knee, foot: foot };
   };
   const LL = leg(-1), RL = leg(1);
@@ -413,20 +429,24 @@ export function createSamurai(opt) {
   const skull = add(head, new THREE.SphereGeometry(.112, 24, 18), M.head, 0, .025, 0);
   skull.scale.set(.96, 1.1, 1.0);
   skull.rotation.y = Math.PI;                        /* the face is at −z */
-  add(neck, new THREE.CylinderGeometry(.052, .06, .10, 10), M.skin, 0, .03, 0);
+  skinParts.push(skull, add(neck, new THREE.CylinderGeometry(.052, .06, .10, 10), M.skin, 0, .03, 0));
   const jaw = add(head, new THREE.SphereGeometry(.075, 12, 10), M.skin, 0, -.04, -.012);
   jaw.scale.set(1.05, .8, 1.0);
+  skinParts.push(jaw);
   /* the chonmage: a folded queue lying forward over the crown */
   const bun = add(head, new THREE.CylinderGeometry(.024, .028, .085, 8), M.hair, 0, .125, .03);
   bun.rotation.x = -1.15;
-  add(head, new THREE.CylinderGeometry(.03, .03, .022, 8), M.cord, 0, .10, .06).rotation.x = -1.15;
-  add(head, new THREE.SphereGeometry(.05, 10, 8), M.hair, 0, .085, .07).scale.set(1.1, .7, 1);
+  const tie = add(head, new THREE.CylinderGeometry(.03, .03, .022, 8), M.cord, 0, .10, .06); tie.rotation.x = -1.15;
+  const knot = add(head, new THREE.SphereGeometry(.05, 10, 8), M.hair, 0, .085, .07); knot.scale.set(1.1, .7, 1);
+  hairParts.push(bun, tie, knot);
   /* loose strands the rain has pulled down */
   const strands = [];
   [[-1, .06, -.02], [1, .07, -.01], [-1, .02, .05]].forEach(([s, y, z], i) => {
     const st = add(head, new THREE.BoxGeometry(.012, .14, .02), M.hair, s * .1, y - .05, z);
-    st.rotation.z = s * .12; st.userData.s = s; st.userData.i = i; strands.push(st);
+    st.rotation.z = s * .12; st.userData.s = s; st.userData.i = i; strands.push(st); hairParts.push(st);
   });
+  hairParts.forEach(h => { h.userData.restY = h.position.y; });
+  const CROWN_Y = .025 + .112 * 1.1;                 /* top of the skull, in head space */
   let hat = null;
   if (opt.hat) {
     hat = new THREE.Group(); hat.position.set(0, .13, -.005); hat.rotation.x = .10; head.add(hat);
@@ -468,13 +488,13 @@ export function createSamurai(opt) {
   }
   /* in the hand: the blade points along −z of the hand bone, then is turned
      to lie along the forearm for the guard pose by the rig below */
-  const katana = new THREE.Group();
+  const katana = new THREE.Group(); katana.name = 'katana';
   add(katana, bladeGeo(), M.steel, 0, 0, 0);
   hilt(katana);
   R.hand.add(katana);
   /* sheathed: the saya rides the left hip in the obi, edge up, hilt
      forward; the hilt shows above the mouth of the scabbard */
-  const saya = new THREE.Group();
+  const saya = new THREE.Group(); saya.name = 'saya';
   saya.position.set(-.19, .03, .02);
   saya.rotation.set(.34, -.42, 0);
   hips.add(saya);
@@ -485,7 +505,7 @@ export function createSamurai(opt) {
   add(saya, new THREE.BoxGeometry(.012, .028, .03), M.iron, 0, .02, .09);       /* kurigata */
   const sageo = add(saya, new THREE.TorusGeometry(.03, .004, 6, 14), M.cord, 0, .015, .09);
   sageo.rotation.y = Math.PI / 2;
-  const sheathedHilt = new THREE.Group();
+  const sheathedHilt = new THREE.Group(); sheathedHilt.name = 'sheathedHilt';
   sheathedHilt.rotation.y = Math.PI;                        /* the hilt runs back along +z of the saya... */
   sheathedHilt.position.set(0, 0, 0);
   saya.add(sheathedHilt);
@@ -506,6 +526,7 @@ export function createSamurai(opt) {
      nod forward with a negative x. Around z, positive takes the right arm
      out from the body and the left arm across it. */
   let breath = 0;
+  const grip = new THREE.Vector3();
   /* state: { speed 0..1, run, phase, drawn, swing (-1 none, else 0..1), time } */
   function update(dt, s) {
     breath += dt;
@@ -528,7 +549,7 @@ export function createSamurai(opt) {
     LL.foot.rotation.x = -(LL.hip.rotation.x + LL.knee.rotation.x) * .8 - amp * Math.max(0, -Math.sin(p - .5)) * .45;
     RL.foot.rotation.x = -(RL.hip.rotation.x + RL.knee.rotation.x) * .8 - amp * Math.max(0, -Math.sin(p + Math.PI - .5)) * .45;
     /* weight: the hips drop into each stance and rise over the standing leg */
-    hips.position.y = HIP_Y - .028 * amp - run * .03 + .035 * amp * Math.abs(Math.cos(p))
+    hips.position.y = hipY - .028 * amp - run * .03 + .035 * amp * Math.abs(Math.cos(p))
                     + (drawn && amp < .05 ? -.03 : 0);
     hips.position.x = Math.sin(p) * .012 * amp;
     hips.rotation.y = Math.sin(p) * (.10 + run * .06) * amp;
@@ -538,7 +559,7 @@ export function createSamurai(opt) {
     spine.rotation.z = -(s.turnLean || 0) * .055;
     spine.rotation.y = -hips.rotation.y * 1.4;
     chest.rotation.y = -hips.rotation.y * .4;
-    chest.position.y = .24 + Math.sin(t * 1.4) * .004;
+    chest.position.y = chestY + Math.sin(t * 1.4) * .004;
     head.rotation.x = -(.04 + amp * .06) - spine.rotation.x * .5;
     head.rotation.y = -spine.rotation.y * .5 + Math.sin(t * .7) * .04;
 
@@ -588,6 +609,9 @@ export function createSamurai(opt) {
       RL.hip.rotation.x += cut * k * .45; LL.hip.rotation.x -= cut * k * .2;
       katana.rotation.set(-1.25 + arc(0, .2, -.3) * k, 0, arc(0, 0, .35) * k);
     }
+    /* the grip offset is a tuning knob for a loaded body whose hand does
+       not sit where the glove box does */
+    if (drawn) katana.position.add(grip);
 
     /* ---- the loose parts ---- */
     tassets.forEach(k => {
@@ -610,10 +634,72 @@ export function createSamurai(opt) {
     sheathedHilt.visible = !drawn;
   }
 
-  return { group, update, meshes, height:1.74,
-    joints:{hips,spine,chest,neck,head,leftArm:L.shoulder,leftForearm:L.elbow,leftHand:L.hand,
-      rightArm:R.shoulder,rightForearm:R.elbow,rightHand:R.hand,leftThigh:LL.hip,leftShin:LL.knee,leftFoot:LL.foot,
-      rightThigh:RL.hip,rightShin:RL.knee,rightFoot:RL.foot},
-    legs:[LL,RL], katana, saya, sheathedHilt,
+  const joints = {hips,spine,chest,neck,head,leftArm:L.shoulder,leftForearm:L.elbow,leftHand:L.hand,
+    rightArm:R.shoulder,rightForearm:R.elbow,rightHand:R.hand,leftThigh:LL.hip,leftShin:LL.knee,leftFoot:LL.foot,
+    rightThigh:RL.hip,rightShin:RL.knee,rightFoot:RL.foot};
+
+  /* ------------------------------------------------------- refitting
+     A loaded body brings its own proportions. fitSkeleton moves the joints
+     onto its rest positions (group space, metres) with every rotation at
+     zero. Joints that branch off the trunk (shoulders, hip sockets, the
+     spine chain) take the literal offset; joints that continue a limb
+     (elbow, wrist, knee, ankle) keep the rig's convention that a limb
+     hangs down the parent's −y in the zero pose, so the pose cycle above
+     and the T-pose calibration in templeAnimation.js stay valid. The
+     loader then aims each limb at its child to match the body's rest. */
+  const LIMB = { leftForearm: 'leftArm', leftHand: 'leftForearm', rightForearm: 'rightArm', rightHand: 'rightForearm',
+    leftShin: 'leftThigh', leftFoot: 'leftShin', rightShin: 'rightThigh', rightFoot: 'rightShin' };
+  const ORDER = ['hips', 'spine', 'chest', 'neck', 'head', 'leftArm', 'leftForearm', 'leftHand', 'rightArm', 'rightForearm',
+    'rightHand', 'leftThigh', 'leftShin', 'leftFoot', 'rightThigh', 'rightShin', 'rightFoot'];
+  const v = new THREE.Vector3(), w = new THREE.Vector3();
+  function fitSkeleton(rest) {
+    ORDER.forEach(n => joints[n].rotation.set(0, 0, 0));
+    group.updateMatrixWorld(true);
+    for (const n of ORDER) {
+      if (!rest[n]) continue;
+      const j = joints[n];
+      if (LIMB[n] && rest[LIMB[n]]) {
+        j.position.set(0, -v.fromArray(rest[n]).distanceTo(w.fromArray(rest[LIMB[n]])), 0);
+      } else {
+        group.localToWorld(v.fromArray(rest[n]));
+        j.parent.worldToLocal(v);
+        j.position.copy(v);
+      }
+      j.updateMatrixWorld(true);
+    }
+    if (rest.hips) hipY = hips.position.y;
+    if (rest.chest) chestY = chest.position.y;
+    /* the scabbard keeps its place beside the left hip socket */
+    saya.position.x = LL.hip.position.x - .085;
+    return joints;
+  }
+  /* lift the topknot and strands to sit on a crown of another height */
+  function fitHair(o) {
+    o = o || {};
+    const headY = hips.position.y + spine.position.y + chest.position.y + neck.position.y + head.position.y;
+    /* a real skull is broader than the sphere the knot was tied on, so the
+       hair takes an extra lift and a little growth to stay on top of it */
+    const dy = (typeof o.crownY === 'number' ? (o.crownY - headY) - CROWN_Y : 0) + (o.lift || 0);
+    const sc = o.scale || 1;
+    /* the knot grows with the skull; the strands are already hair-thin */
+    hairParts.forEach(h => { h.position.y = h.userData.restY + dy; h.scale.setScalar(h.userData.s ? 1 : sc); });
+  }
+  let bodyMode = 'procedural';
+  [...clothParts, ...wearParts, ...armourParts].forEach(m => { m.userData.baseScale = m.scale.clone(); });
+  function setBodyMode(mode) {
+    bodyMode = mode === 'glb' ? 'glb' : 'procedural';
+    skinParts.forEach(m => { m.visible = bodyMode !== 'glb'; });
+    /* let the trousers, sleeves, gloves and boots out over the loaded body */
+    const grow = bodyMode === 'glb' ? 1.3 : 1;
+    clothParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.x *= grow; m.scale.z *= grow; });
+    wearParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.multiplyScalar(bodyMode === 'glb' ? 1.35 : 1); });
+    armourParts.forEach(m => { m.scale.copy(m.userData.baseScale); if (bodyMode === 'glb') { m.scale.z *= 1.24; m.scale.x *= 1.06; } });
+    mon.position.z = bodyMode === 'glb' ? -.258 : -.207;
+    return bodyMode;
+  }
+
+  return { group, update, meshes, height:1.74, joints,
+    legs:[LL,RL], katana, saya, sheathedHilt, grip, skinParts, hairParts,
+    fitSkeleton, fitHair, setBodyMode, get bodyMode() { return bodyMode; }, get hipY() { return hipY; },
   };
 }

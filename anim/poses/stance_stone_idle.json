@@ -1,0 +1,12 @@
+{ "name": "stance_stone_idle", "loop": true, "mask": "full",
+  "keys": [
+    { "time": 0, "label": "chudan",
+      "joints": { "r_arm": { "raise": 48, "straddle": -8, "turn": -12 }, "r_elbow": { "bend": 58 }, "r_wrist": { "bend": -6 },
+                  "l_arm": { "raise": 44, "straddle": 4, "turn": -22 }, "l_elbow": { "bend": 78 }, "l_wrist": { "bend": 4 },
+                  "torso": { "bend": 6 }, "body": { "bend": 3 }, "head": { "nod": -2 },
+                  "l_leg": { "raise": 12, "straddle": 7 }, "l_knee": { "bend": 18 }, "l_ankle": { "bend": -6 },
+                  "r_leg": { "raise": -8, "straddle": 7 }, "r_knee": { "bend": 12 }, "r_ankle": { "bend": 4 } } },
+    { "time": 1.2, "label": "breathe", "use": "stance_stone_idle#0",
+      "joints": { "r_elbow": { "bend": 61 }, "l_elbow": { "bend": 81 }, "torso": { "bend": 7 }, "r_arm": { "raise": 50 }, "l_arm": { "raise": 46 } } },
+    { "time": 2.4, "label": "chudan", "use": "stance_stone_idle#0" }
+  ] }

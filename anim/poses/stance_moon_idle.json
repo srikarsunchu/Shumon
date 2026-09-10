@@ -1,0 +1,88 @@
+{
+ "name": "stance_moon_idle",
+ "loop": true,
+ "mask": "full",
+ "keys": [
+  {
+   "time": 0,
+   "label": "jodan",
+   "joints": {
+    "r_arm": {
+     "raise": 88,
+     "straddle": 14,
+     "turn": 10
+    },
+    "r_elbow": {
+     "bend": 96
+    },
+    "r_wrist": {
+     "bend": -12
+    },
+    "l_arm": {
+     "raise": 84,
+     "straddle": 2,
+     "turn": -12
+    },
+    "l_elbow": {
+     "bend": 102
+    },
+    "l_wrist": {
+     "bend": 6
+    },
+    "torso": {
+     "bend": 2,
+     "turn": 10
+    },
+    "body": {
+     "bend": 4,
+     "turn": 6
+    },
+    "head": {
+     "nod": -4,
+     "turn": -6
+    },
+    "l_leg": {
+     "raise": 8,
+     "straddle": 18
+    },
+    "l_knee": {
+     "bend": 26
+    },
+    "l_ankle": {
+     "bend": -10
+    },
+    "r_leg": {
+     "raise": -8,
+     "straddle": 18
+    },
+    "r_knee": {
+     "bend": 20
+    },
+    "r_ankle": {
+     "bend": 4
+    }
+   }
+  },
+  {
+   "time": 1.2,
+   "label": "breathe",
+   "use": "stance_moon_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 90
+    },
+    "l_arm": {
+     "raise": 86
+    },
+    "body": {
+     "bend": 5
+    }
+   }
+  },
+  {
+   "time": 2.4,
+   "label": "jodan",
+   "use": "stance_moon_idle#0"
+  }
+ ]
+}

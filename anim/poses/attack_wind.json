@@ -1,0 +1,134 @@
+{
+ "name": "attack_wind",
+ "loop": false,
+ "mask": "full",
+ "keys": [
+  {
+   "time": 0,
+   "label": "hasso",
+   "use": "stance_wind_idle#0"
+  },
+  {
+   "time": 0.2,
+   "label": "coil",
+   "use": "stance_wind_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 44,
+     "straddle": 40,
+     "turn": 30
+    },
+    "r_elbow": {
+     "bend": 112
+    },
+    "torso": {
+     "turn": -34,
+     "bend": 6
+    },
+    "body": {
+     "turn": -16
+    },
+    "head": {
+     "turn": 22
+    }
+   }
+  },
+  {
+   "time": 0.38,
+   "label": "sweep",
+   "use": "stance_wind_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 74,
+     "straddle": 6,
+     "turn": 0
+    },
+    "r_elbow": {
+     "bend": 22
+    },
+    "l_arm": {
+     "raise": 70,
+     "straddle": -10,
+     "turn": -20
+    },
+    "l_elbow": {
+     "bend": 42
+    },
+    "torso": {
+     "turn": 10,
+     "bend": 6
+    },
+    "body": {
+     "turn": 6,
+     "bend": 4
+    },
+    "head": {
+     "turn": -4
+    },
+    "r_leg": {
+     "raise": 30
+    },
+    "r_knee": {
+     "bend": 36
+    },
+    "l_leg": {
+     "raise": -18
+    },
+    "l_knee": {
+     "bend": 6
+    }
+   }
+  },
+  {
+   "time": 0.55,
+   "label": "through",
+   "use": "stance_wind_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 64,
+     "straddle": -40,
+     "turn": -22
+    },
+    "r_elbow": {
+     "bend": 30
+    },
+    "l_arm": {
+     "raise": 50,
+     "straddle": -20,
+     "turn": -30
+    },
+    "l_elbow": {
+     "bend": 60
+    },
+    "torso": {
+     "turn": 40,
+     "bend": 8
+    },
+    "body": {
+     "turn": 18,
+     "bend": 4
+    },
+    "head": {
+     "turn": -16
+    },
+    "r_leg": {
+     "raise": 28
+    },
+    "r_knee": {
+     "bend": 34
+    },
+    "l_leg": {
+     "raise": -16
+    },
+    "l_knee": {
+     "bend": 8
+    }
+   }
+  },
+  {
+   "time": 0.85,
+   "label": "hasso",
+   "use": "stance_wind_idle#0"
+  }
+ ]
+}

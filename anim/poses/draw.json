@@ -1,0 +1,14 @@
+{ "name": "draw", "loop": false, "mask": "upper",
+  "events": [ { "time": 0.22, "name": "katanaInHand", "value": true } ],
+  "keys": [
+    { "time": 0, "label": "hilt", "use": "saya_hold#0",
+      "joints": { "r_arm": { "raise": 10, "straddle": 6 }, "r_elbow": { "bend": 22 } } },
+    { "time": 0.18, "label": "reach", "use": "saya_hold#0",
+      "joints": { "r_arm": { "raise": 36, "straddle": -22, "turn": -42 }, "r_elbow": { "bend": 96 }, "r_wrist": { "turn": 38, "bend": 10 },
+                  "torso": { "turn": 14, "bend": 6 }, "head": { "nod": 4 } } },
+    { "time": 0.32, "label": "clear",
+      "joints": { "r_arm": { "raise": 72, "straddle": 36, "turn": 22 }, "r_elbow": { "bend": 42 }, "r_wrist": { "tilt": 20 },
+                  "l_arm": { "raise": 20, "straddle": 6, "turn": -20 }, "l_elbow": { "bend": 62 },
+                  "torso": { "turn": -10, "bend": 4 } } },
+    { "time": 0.5, "label": "guard", "use": "stance_stone_idle#0" }
+  ] }

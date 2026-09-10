@@ -25,11 +25,12 @@ export async function loadAuthoredMotion(samurai, data) {
   const worldQ=new THREE.Quaternion(),parentQ=new THREE.Quaternion(),rootQ=new THREE.Quaternion();
   return {
     update(dt,s) {
-      const speed=s.speed*5.6, move=THREE.MathUtils.smoothstep(speed,.03,.8),run=THREE.MathUtils.smoothstep(speed,2.8,5.6);
+      // Walk → Jog → Sprint by ground speed: the jog carries the 1.6–3.6 m/s band the walk used to stretch over.
+      const speed=s.speed*5.6, move=THREE.MathUtils.smoothstep(speed,.03,.8),jog=THREE.MathUtils.smoothstep(speed,1.6,3.2),run=THREE.MathUtils.smoothstep(speed,3.6,5.6);
       const attack=s.swing>=0?Math.min(1,s.swing*12,(1-s.swing)*10):0;
-      const weights={Idle_Loop:!s.drawn?1-move:0,Sword_Idle:s.drawn?1-move:0,Walk_Loop:move*(1-run),Jog_Fwd_Loop:0,Sprint_Loop:move*run};
+      const weights={Idle_Loop:!s.drawn?1-move:0,Sword_Idle:s.drawn?1-move:0,Walk_Loop:move*(1-jog),Jog_Fwd_Loop:move*jog*(1-run),Sprint_Loop:move*run};
       for(const [name,weight] of Object.entries(weights)) actions[name].setEffectiveWeight(weight*(1-attack));
-      actions.Walk_Loop.setEffectiveTimeScale(Math.max(.1,speed/2.2)); actions.Sprint_Loop.setEffectiveTimeScale(Math.max(.1,speed/5.6));
+      actions.Walk_Loop.setEffectiveTimeScale(Math.max(.1,speed/2.2)); actions.Jog_Fwd_Loop.setEffectiveTimeScale(Math.max(.1,speed/3.2)); actions.Sprint_Loop.setEffectiveTimeScale(Math.max(.1,speed/5.6));
       actions.Sword_Attack.time=Math.max(0,s.swing)*clips.Sword_Attack.duration;
       actions.Sword_Attack.setEffectiveWeight(attack);
       mixer.update(dt); source.updateMatrixWorld(true);

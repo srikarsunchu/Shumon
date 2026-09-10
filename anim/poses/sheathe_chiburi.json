@@ -1,0 +1,18 @@
+{ "name": "sheathe_chiburi", "loop": false, "mask": "upper",
+  "events": [ { "time": 0.55, "name": "katanaInHand", "value": false } ],
+  "keys": [
+    { "time": 0, "label": "guard", "use": "stance_stone_idle#0" },
+    { "time": 0.22, "label": "flick",
+      "joints": { "r_arm": { "raise": 30, "straddle": 46, "turn": 28 }, "r_elbow": { "bend": 28 }, "r_wrist": { "tilt": 42, "bend": -10 },
+                  "l_arm": { "raise": 16, "straddle": 4, "turn": -24 }, "l_elbow": { "bend": 70 },
+                  "torso": { "turn": -10, "bend": 4 }, "head": { "turn": 10 } } },
+    { "time": 0.42, "label": "mouth",
+      "joints": { "r_arm": { "raise": 34, "straddle": -16, "turn": -50 }, "r_elbow": { "bend": 92 }, "r_wrist": { "turn": 30, "bend": 8 },
+                  "l_arm": { "raise": 24, "straddle": 2, "turn": -26 }, "l_elbow": { "bend": 88 }, "l_wrist": { "bend": 14, "tilt": -10 },
+                  "torso": { "turn": 12, "bend": 6 }, "head": { "nod": 8, "turn": -6 } } },
+    { "time": 0.68, "label": "home",
+      "joints": { "r_arm": { "raise": 16, "straddle": -8, "turn": -30 }, "r_elbow": { "bend": 58 }, "r_wrist": { "turn": 20 },
+                  "l_arm": { "raise": 18, "straddle": 4, "turn": -28 }, "l_elbow": { "bend": 84 }, "l_wrist": { "bend": 14, "tilt": -10 },
+                  "torso": { "turn": 6, "bend": 4 }, "head": { "nod": 4 } } },
+    { "time": 0.9, "label": "rest", "use": "idle_hand_on_hilt#0" }
+  ] }

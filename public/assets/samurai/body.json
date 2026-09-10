@@ -1,0 +1,1372 @@
+{
+  "version": 1,
+  "source": "MPFB2 (MakeHuman basemesh, CC0) + makehuman_system_assets (CC0); see CREDITS.md",
+  "height": 1.74,
+  "units": "metres, glTF Y-up",
+  "facing": "+Z",
+  "restPose": "A-pose (MakeHuman default)",
+  "upperArmLDirection": [
+    0.6606,
+    -0.7508,
+    0.0015
+  ],
+  "triangles": 27488,
+  "trianglesByMesh": {
+    "samurai": 26756,
+    "samurai.eyebrow001": 192,
+    "samurai.eyelashes01": 368,
+    "samurai.low-poly": 172
+  },
+  "glbBytes": 1439700,
+  "textures": {
+    "young_lightskinned_male_diffuse3.png": [
+      2048,
+      2048
+    ],
+    "eyebrow001.png": [
+      512,
+      512
+    ],
+    "eyelashes01.png": [
+      512,
+      512
+    ],
+    "brown_eye.png": [
+      1024,
+      1024
+    ]
+  },
+  "skin": "young_asian_male.mhmat",
+  "assets": [
+    "low-poly.mhclo",
+    "eyebrow001.mhclo",
+    "eyelashes01.mhclo"
+  ],
+  "macros": {
+    "gender": 1.0,
+    "age": 0.55,
+    "muscle": 0.72,
+    "weight": 0.48,
+    "proportions": 0.62,
+    "height": 0.55,
+    "cupsize": 0.5,
+    "firmness": 0.5,
+    "race": {
+      "asian": 0.75,
+      "caucasian": 0.25,
+      "african": 0.0
+    }
+  },
+  "faceTargets": {
+    "chin-width-incr": 0.35,
+    "chin-prominent-incr": 0.3,
+    "chin-bones-incr": 0.25,
+    "l-cheek-bones-incr": 0.4,
+    "r-cheek-bones-incr": 0.4,
+    "l-cheek-volume-decr": 0.25,
+    "r-cheek-volume-decr": 0.25,
+    "nose-width1-incr": 0.2,
+    "nose-scale-vert-incr": 0.15,
+    "l-eye-height2-decr": 0.2,
+    "r-eye-height2-decr": 0.2,
+    "mouth-scale-horiz-incr": 0.2,
+    "mouth-lowerlip-volume-decr": 0.15,
+    "forehead-scale-vert-incr": 0.2,
+    "head-rectangular": 0.3,
+    "eyebrows-trans-down": 0.15
+  },
+  "roles": {
+    "_note": "MPFB rigify.human layout, read off the rest heights: differs from the plan's guess (chest .003 / neck .004). Shoulders hang off DEF-spine.004.",
+    "hips": "DEF-spine",
+    "spine": "DEF-spine.001",
+    "spine2": "DEF-spine.002",
+    "spine3": "DEF-spine.003",
+    "chest": "DEF-spine.004",
+    "neck": "DEF-spine.005",
+    "head": "DEF-spine.006",
+    "leftArm": "DEF-upper_arm.L",
+    "leftForearm": "DEF-forearm.L",
+    "leftHand": "DEF-hand.L",
+    "rightArm": "DEF-upper_arm.R",
+    "rightForearm": "DEF-forearm.R",
+    "rightHand": "DEF-hand.R",
+    "leftThigh": "DEF-thigh.L",
+    "leftShin": "DEF-shin.L",
+    "leftFoot": "DEF-foot.L",
+    "rightThigh": "DEF-thigh.R",
+    "rightShin": "DEF-shin.R",
+    "rightFoot": "DEF-foot.R"
+  },
+  "bones": [
+    "DEF-spine",
+    "DEF-spine.001",
+    "DEF-spine.002",
+    "DEF-spine.003",
+    "DEF-spine.004",
+    "DEF-spine.005",
+    "DEF-spine.006",
+    "DEF-shoulder.L",
+    "DEF-upper_arm.L",
+    "DEF-upper_arm.L.001",
+    "DEF-forearm.L",
+    "DEF-forearm.L.001",
+    "DEF-hand.L",
+    "DEF-f_index.01.L",
+    "DEF-f_index.02.L",
+    "DEF-f_index.03.L",
+    "DEF-thumb.01.L",
+    "DEF-thumb.02.L",
+    "DEF-thumb.03.L",
+    "DEF-palm.01.L",
+    "DEF-f_middle.01.L",
+    "DEF-f_middle.02.L",
+    "DEF-f_middle.03.L",
+    "DEF-palm.02.L",
+    "DEF-f_ring.01.L",
+    "DEF-f_ring.02.L",
+    "DEF-f_ring.03.L",
+    "DEF-palm.03.L",
+    "DEF-f_pinky.01.L",
+    "DEF-f_pinky.02.L",
+    "DEF-f_pinky.03.L",
+    "DEF-palm.04.L",
+    "DEF-shoulder.R",
+    "DEF-upper_arm.R",
+    "DEF-upper_arm.R.001",
+    "DEF-forearm.R",
+    "DEF-forearm.R.001",
+    "DEF-hand.R",
+    "DEF-f_index.01.R",
+    "DEF-f_index.02.R",
+    "DEF-f_index.03.R",
+    "DEF-thumb.01.R",
+    "DEF-thumb.02.R",
+    "DEF-thumb.03.R",
+    "DEF-palm.01.R",
+    "DEF-f_middle.01.R",
+    "DEF-f_middle.02.R",
+    "DEF-f_middle.03.R",
+    "DEF-palm.02.R",
+    "DEF-f_ring.01.R",
+    "DEF-f_ring.02.R",
+    "DEF-f_ring.03.R",
+    "DEF-palm.03.R",
+    "DEF-f_pinky.01.R",
+    "DEF-f_pinky.02.R",
+    "DEF-f_pinky.03.R",
+    "DEF-palm.04.R",
+    "DEF-pelvis.L",
+    "DEF-pelvis.R",
+    "DEF-thigh.L",
+    "DEF-thigh.L.001",
+    "DEF-shin.L",
+    "DEF-shin.L.001",
+    "DEF-foot.L",
+    "DEF-toe.L",
+    "DEF-thigh.R",
+    "DEF-thigh.R.001",
+    "DEF-shin.R",
+    "DEF-shin.R.001",
+    "DEF-foot.R",
+    "DEF-toe.R"
+  ],
+  "boneParents": {
+    "DEF-spine": null,
+    "DEF-spine.001": "DEF-spine",
+    "DEF-spine.002": "DEF-spine.001",
+    "DEF-spine.003": "DEF-spine.002",
+    "DEF-spine.004": "DEF-spine.003",
+    "DEF-spine.005": "DEF-spine.004",
+    "DEF-spine.006": "DEF-spine.005",
+    "DEF-shoulder.L": "DEF-spine.004",
+    "DEF-upper_arm.L": "DEF-shoulder.L",
+    "DEF-upper_arm.L.001": "DEF-upper_arm.L",
+    "DEF-forearm.L": "DEF-upper_arm.L.001",
+    "DEF-forearm.L.001": "DEF-forearm.L",
+    "DEF-hand.L": "DEF-forearm.L.001",
+    "DEF-f_index.01.L": "DEF-hand.L",
+    "DEF-f_index.02.L": "DEF-f_index.01.L",
+    "DEF-f_index.03.L": "DEF-f_index.02.L",
+    "DEF-thumb.01.L": "DEF-hand.L",
+    "DEF-thumb.02.L": "DEF-thumb.01.L",
+    "DEF-thumb.03.L": "DEF-thumb.02.L",
+    "DEF-palm.01.L": "DEF-hand.L",
+    "DEF-f_middle.01.L": "DEF-hand.L",
+    "DEF-f_middle.02.L": "DEF-f_middle.01.L",
+    "DEF-f_middle.03.L": "DEF-f_middle.02.L",
+    "DEF-palm.02.L": "DEF-hand.L",
+    "DEF-f_ring.01.L": "DEF-hand.L",
+    "DEF-f_ring.02.L": "DEF-f_ring.01.L",
+    "DEF-f_ring.03.L": "DEF-f_ring.02.L",
+    "DEF-palm.03.L": "DEF-hand.L",
+    "DEF-f_pinky.01.L": "DEF-hand.L",
+    "DEF-f_pinky.02.L": "DEF-f_pinky.01.L",
+    "DEF-f_pinky.03.L": "DEF-f_pinky.02.L",
+    "DEF-palm.04.L": "DEF-hand.L",
+    "DEF-shoulder.R": "DEF-spine.004",
+    "DEF-upper_arm.R": "DEF-shoulder.R",
+    "DEF-upper_arm.R.001": "DEF-upper_arm.R",
+    "DEF-forearm.R": "DEF-upper_arm.R.001",
+    "DEF-forearm.R.001": "DEF-forearm.R",
+    "DEF-hand.R": "DEF-forearm.R.001",
+    "DEF-f_index.01.R": "DEF-hand.R",
+    "DEF-f_index.02.R": "DEF-f_index.01.R",
+    "DEF-f_index.03.R": "DEF-f_index.02.R",
+    "DEF-thumb.01.R": "DEF-hand.R",
+    "DEF-thumb.02.R": "DEF-thumb.01.R",
+    "DEF-thumb.03.R": "DEF-thumb.02.R",
+    "DEF-palm.01.R": "DEF-hand.R",
+    "DEF-f_middle.01.R": "DEF-hand.R",
+    "DEF-f_middle.02.R": "DEF-f_middle.01.R",
+    "DEF-f_middle.03.R": "DEF-f_middle.02.R",
+    "DEF-palm.02.R": "DEF-hand.R",
+    "DEF-f_ring.01.R": "DEF-hand.R",
+    "DEF-f_ring.02.R": "DEF-f_ring.01.R",
+    "DEF-f_ring.03.R": "DEF-f_ring.02.R",
+    "DEF-palm.03.R": "DEF-hand.R",
+    "DEF-f_pinky.01.R": "DEF-hand.R",
+    "DEF-f_pinky.02.R": "DEF-f_pinky.01.R",
+    "DEF-f_pinky.03.R": "DEF-f_pinky.02.R",
+    "DEF-palm.04.R": "DEF-hand.R",
+    "DEF-pelvis.L": "DEF-spine",
+    "DEF-pelvis.R": "DEF-spine",
+    "DEF-thigh.L": "DEF-spine",
+    "DEF-thigh.L.001": "DEF-thigh.L",
+    "DEF-shin.L": "DEF-thigh.L.001",
+    "DEF-shin.L.001": "DEF-shin.L",
+    "DEF-foot.L": "DEF-shin.L.001",
+    "DEF-toe.L": "DEF-foot.L",
+    "DEF-thigh.R": "DEF-spine",
+    "DEF-thigh.R.001": "DEF-thigh.R",
+    "DEF-shin.R": "DEF-thigh.R.001",
+    "DEF-shin.R.001": "DEF-shin.R",
+    "DEF-foot.R": "DEF-shin.R.001",
+    "DEF-toe.R": "DEF-foot.R"
+  },
+  "restHeads": {
+    "DEF-spine": [
+      0.0,
+      0.83787,
+      0.00307
+    ],
+    "DEF-spine.001": [
+      0.0,
+      1.01416,
+      -0.03298
+    ],
+    "DEF-spine.002": [
+      0.0,
+      1.08076,
+      -0.02468
+    ],
+    "DEF-spine.003": [
+      0.0,
+      1.13984,
+      -0.03565
+    ],
+    "DEF-spine.004": [
+      0.0,
+      1.27514,
+      -0.05608
+    ],
+    "DEF-spine.005": [
+      0.0,
+      1.48237,
+      0.00663
+    ],
+    "DEF-spine.006": [
+      0.0,
+      1.57747,
+      0.04585
+    ],
+    "DEF-shoulder.L": [
+      0.02256,
+      1.40798,
+      0.0174
+    ],
+    "DEF-upper_arm.L": [
+      0.19073,
+      1.37823,
+      0.01221
+    ],
+    "DEF-upper_arm.L.001": [
+      0.27441,
+      1.28312,
+      0.0124
+    ],
+    "DEF-forearm.L": [
+      0.35809,
+      1.188,
+      0.01259
+    ],
+    "DEF-forearm.L.001": [
+      0.42336,
+      1.12619,
+      0.10468
+    ],
+    "DEF-hand.L": [
+      0.48863,
+      1.06437,
+      0.19677
+    ],
+    "DEF-f_index.01.L": [
+      0.51833,
+      1.02403,
+      0.3007
+    ],
+    "DEF-f_index.02.L": [
+      0.52195,
+      1.00861,
+      0.32377
+    ],
+    "DEF-f_index.03.L": [
+      0.52137,
+      0.99166,
+      0.34219
+    ],
+    "DEF-thumb.01.L": [
+      0.48938,
+      1.05751,
+      0.24476
+    ],
+    "DEF-thumb.02.L": [
+      0.46716,
+      1.04923,
+      0.26786
+    ],
+    "DEF-thumb.03.L": [
+      0.45375,
+      1.03538,
+      0.30217
+    ],
+    "DEF-palm.01.L": [
+      0.48938,
+      1.05751,
+      0.24476
+    ],
+    "DEF-f_middle.01.L": [
+      0.53576,
+      1.01136,
+      0.28202
+    ],
+    "DEF-f_middle.02.L": [
+      0.5439,
+      0.98434,
+      0.30521
+    ],
+    "DEF-f_middle.03.L": [
+      0.54682,
+      0.96189,
+      0.32452
+    ],
+    "DEF-palm.02.L": [
+      0.49981,
+      1.04803,
+      0.22588
+    ],
+    "DEF-f_ring.01.L": [
+      0.544,
+      1.00252,
+      0.2637
+    ],
+    "DEF-f_ring.02.L": [
+      0.55446,
+      0.97679,
+      0.28
+    ],
+    "DEF-f_ring.03.L": [
+      0.55911,
+      0.95469,
+      0.29454
+    ],
+    "DEF-palm.03.L": [
+      0.50992,
+      1.0366,
+      0.21568
+    ],
+    "DEF-f_pinky.01.L": [
+      0.54586,
+      0.9924,
+      0.24304
+    ],
+    "DEF-f_pinky.02.L": [
+      0.55231,
+      0.9721,
+      0.25207
+    ],
+    "DEF-f_pinky.03.L": [
+      0.55394,
+      0.95669,
+      0.25865
+    ],
+    "DEF-palm.04.L": [
+      0.51417,
+      1.03234,
+      0.20967
+    ],
+    "DEF-shoulder.R": [
+      -0.02256,
+      1.40798,
+      0.0174
+    ],
+    "DEF-upper_arm.R": [
+      -0.19073,
+      1.37823,
+      0.01221
+    ],
+    "DEF-upper_arm.R.001": [
+      -0.27441,
+      1.28312,
+      0.0124
+    ],
+    "DEF-forearm.R": [
+      -0.35809,
+      1.188,
+      0.01259
+    ],
+    "DEF-forearm.R.001": [
+      -0.42336,
+      1.12619,
+      0.10468
+    ],
+    "DEF-hand.R": [
+      -0.48863,
+      1.06437,
+      0.19677
+    ],
+    "DEF-f_index.01.R": [
+      -0.51833,
+      1.02403,
+      0.3007
+    ],
+    "DEF-f_index.02.R": [
+      -0.52195,
+      1.00861,
+      0.32377
+    ],
+    "DEF-f_index.03.R": [
+      -0.52137,
+      0.99166,
+      0.34219
+    ],
+    "DEF-thumb.01.R": [
+      -0.48938,
+      1.05751,
+      0.24476
+    ],
+    "DEF-thumb.02.R": [
+      -0.46716,
+      1.04923,
+      0.26786
+    ],
+    "DEF-thumb.03.R": [
+      -0.45375,
+      1.03538,
+      0.30217
+    ],
+    "DEF-palm.01.R": [
+      -0.48938,
+      1.05751,
+      0.24476
+    ],
+    "DEF-f_middle.01.R": [
+      -0.53576,
+      1.01136,
+      0.28202
+    ],
+    "DEF-f_middle.02.R": [
+      -0.5439,
+      0.98434,
+      0.30521
+    ],
+    "DEF-f_middle.03.R": [
+      -0.54682,
+      0.96189,
+      0.32452
+    ],
+    "DEF-palm.02.R": [
+      -0.49981,
+      1.04803,
+      0.22588
+    ],
+    "DEF-f_ring.01.R": [
+      -0.544,
+      1.00252,
+      0.2637
+    ],
+    "DEF-f_ring.02.R": [
+      -0.55446,
+      0.97679,
+      0.28
+    ],
+    "DEF-f_ring.03.R": [
+      -0.55911,
+      0.95469,
+      0.29454
+    ],
+    "DEF-palm.03.R": [
+      -0.50992,
+      1.0366,
+      0.21568
+    ],
+    "DEF-f_pinky.01.R": [
+      -0.54586,
+      0.9924,
+      0.24304
+    ],
+    "DEF-f_pinky.02.R": [
+      -0.55231,
+      0.9721,
+      0.25207
+    ],
+    "DEF-f_pinky.03.R": [
+      -0.55394,
+      0.95669,
+      0.25865
+    ],
+    "DEF-palm.04.R": [
+      -0.51417,
+      1.03234,
+      0.20967
+    ],
+    "DEF-pelvis.L": [
+      0.0,
+      0.92776,
+      -0.00121
+    ],
+    "DEF-pelvis.R": [
+      0.0,
+      0.92776,
+      -0.00121
+    ],
+    "DEF-thigh.L": [
+      0.1085,
+      0.91973,
+      -0.01191
+    ],
+    "DEF-thigh.L.001": [
+      0.12903,
+      0.70637,
+      0.00502
+    ],
+    "DEF-shin.L": [
+      0.14957,
+      0.49301,
+      0.02195
+    ],
+    "DEF-shin.L.001": [
+      0.16955,
+      0.28191,
+      0.01489
+    ],
+    "DEF-foot.L": [
+      0.18954,
+      0.0708,
+      0.00783
+    ],
+    "DEF-toe.L": [
+      0.1928,
+      0.00831,
+      0.13156
+    ],
+    "DEF-thigh.R": [
+      -0.1085,
+      0.91973,
+      -0.01191
+    ],
+    "DEF-thigh.R.001": [
+      -0.12903,
+      0.70637,
+      0.00502
+    ],
+    "DEF-shin.R": [
+      -0.14957,
+      0.49301,
+      0.02195
+    ],
+    "DEF-shin.R.001": [
+      -0.16955,
+      0.28191,
+      0.01489
+    ],
+    "DEF-foot.R": [
+      -0.18954,
+      0.0708,
+      0.00783
+    ],
+    "DEF-toe.R": [
+      -0.1928,
+      0.00831,
+      0.13156
+    ]
+  },
+  "restTails": {
+    "DEF-spine": [
+      0.0,
+      1.01416,
+      -0.03298
+    ],
+    "DEF-spine.001": [
+      0.0,
+      1.08076,
+      -0.02468
+    ],
+    "DEF-spine.002": [
+      0.0,
+      1.13984,
+      -0.03565
+    ],
+    "DEF-spine.003": [
+      0.0,
+      1.27514,
+      -0.05608
+    ],
+    "DEF-spine.004": [
+      0.0,
+      1.48237,
+      0.00663
+    ],
+    "DEF-spine.005": [
+      0.0,
+      1.57747,
+      0.04585
+    ],
+    "DEF-spine.006": [
+      0.0,
+      1.74037,
+      0.03459
+    ],
+    "DEF-shoulder.L": [
+      0.19073,
+      1.37823,
+      0.01221
+    ],
+    "DEF-upper_arm.L": [
+      0.27441,
+      1.28312,
+      0.0124
+    ],
+    "DEF-upper_arm.L.001": [
+      0.35809,
+      1.188,
+      0.01259
+    ],
+    "DEF-forearm.L": [
+      0.42336,
+      1.12619,
+      0.10468
+    ],
+    "DEF-forearm.L.001": [
+      0.48863,
+      1.06437,
+      0.19677
+    ],
+    "DEF-hand.L": [
+      0.53576,
+      1.01136,
+      0.28202
+    ],
+    "DEF-f_index.01.L": [
+      0.52195,
+      1.00861,
+      0.32377
+    ],
+    "DEF-f_index.02.L": [
+      0.52137,
+      0.99166,
+      0.34219
+    ],
+    "DEF-f_index.03.L": [
+      0.51759,
+      0.9708,
+      0.36189
+    ],
+    "DEF-thumb.01.L": [
+      0.46716,
+      1.04923,
+      0.26786
+    ],
+    "DEF-thumb.02.L": [
+      0.45375,
+      1.03538,
+      0.30217
+    ],
+    "DEF-thumb.03.L": [
+      0.44779,
+      1.01764,
+      0.3256
+    ],
+    "DEF-palm.01.L": [
+      0.51833,
+      1.02403,
+      0.3007
+    ],
+    "DEF-f_middle.01.L": [
+      0.5439,
+      0.98434,
+      0.30521
+    ],
+    "DEF-f_middle.02.L": [
+      0.54682,
+      0.96189,
+      0.32452
+    ],
+    "DEF-f_middle.03.L": [
+      0.54658,
+      0.93822,
+      0.34139
+    ],
+    "DEF-palm.02.L": [
+      0.53576,
+      1.01136,
+      0.28202
+    ],
+    "DEF-f_ring.01.L": [
+      0.55446,
+      0.97679,
+      0.28
+    ],
+    "DEF-f_ring.02.L": [
+      0.55911,
+      0.95469,
+      0.29454
+    ],
+    "DEF-f_ring.03.L": [
+      0.56153,
+      0.9291,
+      0.30745
+    ],
+    "DEF-palm.03.L": [
+      0.544,
+      1.00252,
+      0.2637
+    ],
+    "DEF-f_pinky.01.L": [
+      0.55231,
+      0.9721,
+      0.25207
+    ],
+    "DEF-f_pinky.02.L": [
+      0.55394,
+      0.95669,
+      0.25865
+    ],
+    "DEF-f_pinky.03.L": [
+      0.55686,
+      0.93717,
+      0.26691
+    ],
+    "DEF-palm.04.L": [
+      0.54586,
+      0.9924,
+      0.24304
+    ],
+    "DEF-shoulder.R": [
+      -0.19073,
+      1.37823,
+      0.01221
+    ],
+    "DEF-upper_arm.R": [
+      -0.27441,
+      1.28312,
+      0.0124
+    ],
+    "DEF-upper_arm.R.001": [
+      -0.35809,
+      1.188,
+      0.01259
+    ],
+    "DEF-forearm.R": [
+      -0.42336,
+      1.12619,
+      0.10468
+    ],
+    "DEF-forearm.R.001": [
+      -0.48863,
+      1.06437,
+      0.19677
+    ],
+    "DEF-hand.R": [
+      -0.53576,
+      1.01136,
+      0.28202
+    ],
+    "DEF-f_index.01.R": [
+      -0.52195,
+      1.00861,
+      0.32377
+    ],
+    "DEF-f_index.02.R": [
+      -0.52137,
+      0.99166,
+      0.34219
+    ],
+    "DEF-f_index.03.R": [
+      -0.51759,
+      0.9708,
+      0.36189
+    ],
+    "DEF-thumb.01.R": [
+      -0.46716,
+      1.04923,
+      0.26786
+    ],
+    "DEF-thumb.02.R": [
+      -0.45375,
+      1.03538,
+      0.30217
+    ],
+    "DEF-thumb.03.R": [
+      -0.44779,
+      1.01764,
+      0.3256
+    ],
+    "DEF-palm.01.R": [
+      -0.51833,
+      1.02403,
+      0.3007
+    ],
+    "DEF-f_middle.01.R": [
+      -0.5439,
+      0.98434,
+      0.30521
+    ],
+    "DEF-f_middle.02.R": [
+      -0.54682,
+      0.96189,
+      0.32452
+    ],
+    "DEF-f_middle.03.R": [
+      -0.54658,
+      0.93822,
+      0.34139
+    ],
+    "DEF-palm.02.R": [
+      -0.53576,
+      1.01136,
+      0.28202
+    ],
+    "DEF-f_ring.01.R": [
+      -0.55446,
+      0.97679,
+      0.28
+    ],
+    "DEF-f_ring.02.R": [
+      -0.55911,
+      0.95469,
+      0.29454
+    ],
+    "DEF-f_ring.03.R": [
+      -0.56153,
+      0.9291,
+      0.30745
+    ],
+    "DEF-palm.03.R": [
+      -0.544,
+      1.00252,
+      0.2637
+    ],
+    "DEF-f_pinky.01.R": [
+      -0.55231,
+      0.9721,
+      0.25207
+    ],
+    "DEF-f_pinky.02.R": [
+      -0.55394,
+      0.95669,
+      0.25865
+    ],
+    "DEF-f_pinky.03.R": [
+      -0.55686,
+      0.93717,
+      0.26691
+    ],
+    "DEF-palm.04.R": [
+      -0.54586,
+      0.9924,
+      0.24304
+    ],
+    "DEF-pelvis.L": [
+      0.1085,
+      0.91973,
+      -0.01191
+    ],
+    "DEF-pelvis.R": [
+      -0.1085,
+      0.91973,
+      -0.01191
+    ],
+    "DEF-thigh.L": [
+      0.12903,
+      0.70637,
+      0.00502
+    ],
+    "DEF-thigh.L.001": [
+      0.14957,
+      0.49301,
+      0.02195
+    ],
+    "DEF-shin.L": [
+      0.16955,
+      0.28191,
+      0.01489
+    ],
+    "DEF-shin.L.001": [
+      0.18954,
+      0.0708,
+      0.00783
+    ],
+    "DEF-foot.L": [
+      0.1928,
+      0.00831,
+      0.13156
+    ],
+    "DEF-toe.L": [
+      0.1922,
+      0.00885,
+      0.21317
+    ],
+    "DEF-thigh.R": [
+      -0.12903,
+      0.70637,
+      0.00502
+    ],
+    "DEF-thigh.R.001": [
+      -0.14957,
+      0.49301,
+      0.02195
+    ],
+    "DEF-shin.R": [
+      -0.16955,
+      0.28191,
+      0.01489
+    ],
+    "DEF-shin.R.001": [
+      -0.18954,
+      0.0708,
+      0.00783
+    ],
+    "DEF-foot.R": [
+      -0.1928,
+      0.00831,
+      0.13156
+    ],
+    "DEF-toe.R": [
+      -0.1922,
+      0.00885,
+      0.21317
+    ]
+  },
+  "foldedBones": {
+    "DEF-elbow-helper.L": {
+      "DEF-upper_arm.L.001": 0.5,
+      "DEF-forearm.L": 0.5
+    },
+    "DEF-elbow-helper.R": {
+      "DEF-upper_arm.R.001": 0.5,
+      "DEF-forearm.R": 0.5
+    },
+    "DEF-knee-helper.L": {
+      "DEF-thigh.L.001": 0.5,
+      "DEF-shin.L": 0.5
+    },
+    "DEF-knee-helper.R": {
+      "DEF-thigh.R.001": 0.5,
+      "DEF-shin.R": 0.5
+    },
+    "DEF-breast.L": {
+      "DEF-spine.003": 1.0
+    },
+    "DEF-breast.R": {
+      "DEF-spine.003": 1.0
+    },
+    "DEF-pelvis-helper.L": {
+      "DEF-thigh.L": 0.5,
+      "DEF-spine": 0.5
+    },
+    "DEF-pelvis-helper.front.L": {
+      "DEF-thigh.L": 0.5,
+      "DEF-spine": 0.5
+    },
+    "DEF-pelvis-helper.R": {
+      "DEF-thigh.R": 0.5,
+      "DEF-spine": 0.5
+    },
+    "DEF-pelvis-helper.front.R": {
+      "DEF-thigh.R": 0.5,
+      "DEF-spine": 0.5
+    },
+    "DEF-ear.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.L.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.L.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.L.004": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.R.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.R.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-ear.R.004": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-teeth.T": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-eye_master.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.L.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.L.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.L.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.L.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-eye.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-eye_iris.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-eye_master.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.R.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.B.R.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.R.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lid.T.R.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-eye.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-eye_iris.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-teeth.B": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-tongue": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-tongue.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-tongue.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-jaw_master": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-chin": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-chin.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-jaw": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-jaw.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-jaw.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-chin.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-jaw.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-jaw.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-chin.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.T.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.T.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.T.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.T.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.B.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.B.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.B.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-lip.B.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.L.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.L.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.L.004": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.R.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.R.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.B.R.004": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.L.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.L.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.R.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-brow.T.R.003": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.B.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.B.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.B.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.B.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.T.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.T.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.T.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-cheek.T.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-forehead.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-forehead.L.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-forehead.L.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-forehead.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-forehead.R.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-forehead.R.002": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.001": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-nose.004": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-temple.L": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-temple.R": {
+      "DEF-spine.006": 1.0
+    },
+    "DEF-shoulder-helper.L": {
+      "DEF-upper_arm.L": 0.25,
+      "DEF-shoulder.L": 0.5,
+      "DEF-upper_arm.L.001": 0.25
+    },
+    "DEF-shoulder-helper.R": {
+      "DEF-upper_arm.R": 0.25,
+      "DEF-shoulder.R": 0.5,
+      "DEF-upper_arm.R.001": 0.25
+    }
+  },
+  "faceLandmarks": {
+    "nose": {
+      "p": [
+        0.0,
+        1.58135,
+        0.16494
+      ],
+      "uv": [
+        0.87025,
+        0.48317
+      ]
+    },
+    "chin": {
+      "p": [
+        0.0,
+        1.50624,
+        0.1415
+      ],
+      "uv": [
+        0.95359,
+        0.48317
+      ]
+    },
+    "browL": {
+      "p": [
+        0.02565,
+        1.64821,
+        0.15016
+      ],
+      "uv": [
+        0.81199,
+        0.50723
+      ]
+    },
+    "browR": {
+      "p": [
+        -0.02565,
+        1.64821,
+        0.15016
+      ],
+      "uv": [
+        0.81199,
+        0.45911
+      ]
+    },
+    "jawL": {
+      "p": [
+        0.0618,
+        1.54041,
+        0.07794
+      ],
+      "uv": [
+        0.91364,
+        0.59396
+      ]
+    },
+    "jawR": {
+      "p": [
+        -0.0618,
+        1.54041,
+        0.07794
+      ],
+      "uv": [
+        0.91364,
+        0.37237
+      ]
+    }
+  }
+}

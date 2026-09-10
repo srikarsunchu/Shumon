@@ -24,6 +24,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
   const [entered, setEntered] = useState(false);
   const [sound, setSound] = useState(false);
   const [drawn, setDrawn] = useState(false);
+  const [stance, setStance] = useState("stone");
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
@@ -42,11 +43,14 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
       renderer = createTempleNightRenderer(canvas, createTempleGameplay);
       gameRef.current = renderer.gameplay;
       unregisterTools = registerGameTools(renderer.gameplay);
-      Promise.all([renderer.gameplay?.ready, renderer.gameplay?.animationReady]).then(() => { if(mounted) ready=true; }).catch(error => {
+      /* the skinned body and the pose clips settle their own failures
+         (the procedural rig stays), so waiting on them can never fail the world */
+      const optional = (p?: Promise<unknown>) => Promise.resolve(p).catch(() => undefined);
+      Promise.all([renderer.gameplay?.ready, renderer.gameplay?.animationReady, optional(renderer.gameplay?.bodyReady), optional(renderer.gameplay?.clipsReady)]).then(() => { if(mounted) ready=true; }).catch(error => {
         if(mounted){setErrorMessage(error instanceof Error ? error.message : "World initialization failed");setState("unavailable");}
       });
-      renderer.gameplay?.subscribe((status: { active: boolean; drawn: boolean; sound: boolean }) => {
-        setPlaying(status.active); setDrawn(status.drawn); setSound(status.sound);
+      renderer.gameplay?.subscribe((status: { active: boolean; drawn: boolean; sound: boolean; stance: string }) => {
+        setPlaying(status.active); setDrawn(status.drawn); setSound(status.sound); setStance(status.stance);
       });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unknown renderer error");
@@ -157,7 +161,7 @@ function TempleNightWorld({ className = "" }: { className?: string }) {
         {playing ? <>
           <button className="sound-button" aria-pressed={sound} onClick={() => gameRef.current?.toggleSound()}>Sound {sound ? "on" : "off"} <kbd>M</kbd></button>
           <button className="pause-button" onClick={() => gameRef.current?.pause()}>Pause <kbd>Esc</kbd></button>
-          <div className="game-controls"><span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span><span>Mouse · Look</span><span><kbd>Click / Space</kbd> Swing</span><span><kbd>E</kbd> {drawn ? "Sheathe" : "Draw"}</span></div>
+          <div className="game-controls"><span><kbd>W A S D</kbd> Move</span><span><kbd>Shift</kbd> Run</span><span>Mouse · Look</span><span><kbd>Click / Space</kbd> Swing</span><span><kbd>E</kbd> {drawn ? "Sheathe" : "Draw"}</span><span><kbd>1 2 3 4</kbd> Stance · {stance}</span></div>
           <div className="touch-controls">
             <div className="touch-move">{[["KeyW","↑"],["KeyA","←"],["KeyS","↓"],["KeyD","→"]].map(([key,label]) => <button key={key} aria-label={`Move ${key.slice(-1)}`} onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); gameRef.current?.setKey(key,true); }} onPointerUp={() => gameRef.current?.setKey(key,false)} onPointerCancel={() => gameRef.current?.setKey(key,false)}>{label}</button>)}</div>
             <button onClick={() => gameRef.current?.attack()}>Swing</button>

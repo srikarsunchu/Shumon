@@ -1,0 +1,88 @@
+{
+ "name": "stance_wind_idle",
+ "loop": true,
+ "mask": "full",
+ "keys": [
+  {
+   "time": 0,
+   "label": "hasso",
+   "joints": {
+    "r_arm": {
+     "raise": 36,
+     "straddle": 22,
+     "turn": 30
+    },
+    "r_elbow": {
+     "bend": 108
+    },
+    "r_wrist": {
+     "bend": -12,
+     "tilt": 8
+    },
+    "l_arm": {
+     "raise": 42,
+     "straddle": -8,
+     "turn": -22
+    },
+    "l_elbow": {
+     "bend": 98
+    },
+    "l_wrist": {
+     "bend": 6
+    },
+    "torso": {
+     "turn": -14,
+     "bend": 4
+    },
+    "body": {
+     "turn": -8,
+     "bend": 2
+    },
+    "head": {
+     "turn": 12
+    },
+    "r_leg": {
+     "raise": 14,
+     "straddle": 7
+    },
+    "r_knee": {
+     "bend": 20
+    },
+    "r_ankle": {
+     "bend": -8
+    },
+    "l_leg": {
+     "raise": -10,
+     "straddle": 10
+    },
+    "l_knee": {
+     "bend": 8
+    },
+    "l_ankle": {
+     "bend": 5
+    }
+   }
+  },
+  {
+   "time": 1.2,
+   "label": "breathe",
+   "use": "stance_wind_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 38
+    },
+    "r_elbow": {
+     "bend": 111
+    },
+    "torso": {
+     "bend": 5
+    }
+   }
+  },
+  {
+   "time": 2.4,
+   "label": "hasso",
+   "use": "stance_wind_idle#0"
+  }
+ ]
+}

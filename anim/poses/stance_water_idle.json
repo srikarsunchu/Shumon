@@ -1,0 +1,12 @@
+{ "name": "stance_water_idle", "loop": true, "mask": "full",
+  "keys": [
+    { "time": 0, "label": "low-right",
+      "joints": { "r_arm": { "raise": 8, "straddle": 32, "turn": 30 }, "r_elbow": { "bend": 24 }, "r_wrist": { "bend": -18, "tilt": 10 },
+                  "l_arm": { "raise": 42, "straddle": 12, "turn": -40 }, "l_elbow": { "bend": 68 }, "l_wrist": { "bend": -10 },
+                  "torso": { "turn": 18, "bend": 5 }, "body": { "turn": 10, "bend": 2 }, "head": { "turn": -14 },
+                  "l_leg": { "raise": 24, "straddle": 6 }, "l_knee": { "bend": 30 }, "l_ankle": { "bend": -12 },
+                  "r_leg": { "raise": -12, "straddle": 8, "turn": 10 }, "r_knee": { "bend": 10 }, "r_ankle": { "bend": 6 } } },
+    { "time": 1.2, "label": "breathe", "use": "stance_water_idle#0",
+      "joints": { "r_arm": { "raise": 10, "straddle": 34 }, "l_elbow": { "bend": 71 }, "torso": { "bend": 6 } } },
+    { "time": 2.4, "label": "low-right", "use": "stance_water_idle#0" }
+  ] }

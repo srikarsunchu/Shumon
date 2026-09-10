@@ -1,0 +1,134 @@
+{
+ "name": "attack_moon",
+ "loop": false,
+ "mask": "full",
+ "keys": [
+  {
+   "time": 0,
+   "label": "jodan",
+   "use": "stance_moon_idle#0"
+  },
+  {
+   "time": 0.2,
+   "label": "coil",
+   "use": "stance_moon_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 90,
+     "straddle": 26
+    },
+    "l_arm": {
+     "raise": 86,
+     "straddle": 12
+    },
+    "torso": {
+     "turn": 30,
+     "bend": -4
+    },
+    "body": {
+     "turn": 20
+    },
+    "head": {
+     "turn": -18
+    },
+    "r_elbow": {
+     "bend": 100
+    },
+    "l_elbow": {
+     "bend": 104
+    }
+   }
+  },
+  {
+   "time": 0.38,
+   "label": "cut",
+   "use": "stance_moon_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 80,
+     "straddle": 4
+    },
+    "r_elbow": {
+     "bend": 20
+    },
+    "l_arm": {
+     "raise": 74,
+     "straddle": 6
+    },
+    "l_elbow": {
+     "bend": 30
+    },
+    "torso": {
+     "turn": -20,
+     "bend": 16
+    },
+    "body": {
+     "turn": -30,
+     "bend": 6
+    },
+    "head": {
+     "turn": 6,
+     "nod": 6
+    },
+    "l_knee": {
+     "bend": 36
+    },
+    "r_knee": {
+     "bend": 30
+    }
+   }
+  },
+  {
+   "time": 0.55,
+   "label": "spin",
+   "use": "stance_moon_idle#0",
+   "joints": {
+    "r_arm": {
+     "raise": 30,
+     "straddle": -30,
+     "turn": -20
+    },
+    "r_elbow": {
+     "bend": 24
+    },
+    "l_arm": {
+     "raise": 26,
+     "straddle": -10
+    },
+    "l_elbow": {
+     "bend": 40
+    },
+    "torso": {
+     "turn": -50,
+     "bend": 10
+    },
+    "body": {
+     "turn": -60,
+     "bend": 4
+    },
+    "head": {
+     "turn": 20
+    },
+    "l_leg": {
+     "raise": 20,
+     "straddle": 10
+    },
+    "l_knee": {
+     "bend": 30
+    },
+    "r_leg": {
+     "raise": -20,
+     "straddle": 14
+    },
+    "r_knee": {
+     "bend": 26
+    }
+   }
+  },
+  {
+   "time": 0.85,
+   "label": "jodan",
+   "use": "stance_moon_idle#0"
+  }
+ ]
+}

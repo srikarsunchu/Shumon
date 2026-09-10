@@ -57,3 +57,60 @@ async function cameraFixture() {
 }
 await cameraFixture();
 console.log('PASS: camera obstruction and smooth recovery.');
+
+/* Pose-clip layering with injected clips (the fetch path is browser-only):
+   stance keys, the draw clip's katanaInHand event timing, the attack clip
+   taking over the swing, and the .9 s chiburi sheathe. */
+async function clipFixture() {
+  const { CLIP_JOINTS } = await import('../src/shaders/temple-night/templePoseClips.js');
+  const id={q:[0,0,0,1],p:[0,0,0]};
+  const rest={forward:[0,0,-1],height:1.74,joints:Object.fromEntries(CLIP_JOINTS.map(j=>[j,j==='hips'?{q:[0,0,0,1],p:[0,.93,0]}:id]))};
+  const turned={q:new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),.9).toArray(),p:[0,0,0]};
+  const key=(time,over)=>({time,joints:{...rest.joints,...over}});
+  const clip=(name,duration,loop,keys,events)=>({version:1,name,duration,loop,mask:'full',rest,keys,events});
+  const clips={
+    draw:clip('draw',.5,false,[key(0,{}),key(.5,{rightArm:turned})],[{time:.45,name:'katanaInHand',value:true}]),
+    sheathe_chiburi:clip('sheathe_chiburi',.9,false,[key(0,{rightArm:turned}),key(.9,{})],[{time:.7,name:'katanaInHand',value:false}]),
+    stance_wind_idle:clip('stance_wind_idle',2,true,[key(0,{}),key(1,{leftArm:turned})]),
+    attack_wind:clip('attack_wind',.85,false,[key(0,{}),key(.4,{rightArm:turned}),key(.85,{})]),
+  };
+  const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(55);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),mat); floor.rotation.x=-Math.PI/2; scene.add(floor);
+  const game=createTempleGameplay({scene,camera,canvas,clips});
+  await game.ready; await game.bodyReady; await game.clipsReady;
+  const player=scene.getObjectByName('Playable wanderer'), katana=player.getObjectByName('katana'), hilt=player.getObjectByName('sheathedHilt');
+  const rightArm=katana.parent.parent.parent;      /* hand ← forearm ← arm */
+  let state; game.subscribe(s=>state=s); game.start();
+  assert.equal(game.getState().body,'procedural'); assert.deepEqual(game.getState().clips.sort(),Object.keys(clips).sort());
+  assert.equal(state.stance,'stone');
+  const press=code=>{ for(const type of ['keydown','keyup']) { const e=new Event(type); e.code=code; window.dispatchEvent(e); } };
+  press('Digit3'); assert.equal(state.stance,'wind'); assert.equal(game.getState().stance,'wind');
+  assert.throws(()=>game.setStance('fire'),/Unknown stance/);
+  /* draw (.5 s): the blade stays in the saya until the event at .45 of the clip, i.e. .45 s in */
+  game.toggleSword(); assert.equal(state.drawn,true);
+  for(let i=0;i<20;i++) game.update(1/60);
+  assert(!katana.visible && hilt.visible,'blade still sheathed a third of the way through the draw');
+  for(let i=0;i<9;i++) game.update(1/60);
+  assert(katana.visible && !hilt.visible,'blade in hand after the katanaInHand event');
+  for(let i=0;i<60;i++) game.update(1/60);
+  /* the swing hands over to attack_wind: the arm leaves the stance pose mid-swing */
+  const idleArm=rightArm.quaternion.clone();
+  game.attack(); for(let i=0;i<24;i++) game.update(1/60);
+  assert(rightArm.quaternion.angleTo(idleArm)>.3,`attack clip moves the sword arm: ${rightArm.quaternion.angleTo(idleArm)}`);
+  assert(katana.visible,'blade stays in hand through the cut');
+  for(let i=0;i<50;i++) game.update(1/60);
+  /* sheathe takes the chiburi's .9 s: refused at .6 s, accepted after 1 s */
+  game.toggleSword(); assert.equal(state.drawn,false);
+  for(let i=0;i<36;i++) game.update(1/60);
+  assert(katana.visible,'blade still out before the sheathe event at .7 of .9 s');
+  game.toggleSword(); assert.equal(state.drawn,false,'a second toggle is refused mid-sheathe');
+  for(let i=0;i<30;i++) game.update(1/60);
+  assert(!katana.visible && hilt.visible,'blade home after the sheathe');
+  game.toggleSword(); assert.equal(state.drawn,true,'toggle accepted once the .9 s sheathe is over');
+  for(let i=0;i<40;i++) game.update(1/60);
+  game.setKey('KeyW',true); for(let i=0;i<120;i++) game.update(1/60); game.setKey('KeyW',false);
+  assert(Number.isFinite(player.position.x) && Number.isFinite(camera.position.x),'finite after clip layering while moving');
+  game.dispose();
+}
+await clipFixture();
+console.log('PASS: pose-clip layering: stance keys, draw event timing, attack clip, .9 s sheathe.');

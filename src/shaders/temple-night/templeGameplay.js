@@ -3,11 +3,24 @@ import { createSamurai } from './templeSamurai.js';
 import { createTemplePhysics } from './templePhysics.js';
 import { loadAuthoredMotion, createFootPlant } from './templeAnimation.js';
 import { createTempleAudio } from './templeAudio.js';
+import { loadBody } from './templeBody.js';
+import { createPoseClips } from './templePoseClips.js';
 
 const clamp = THREE.MathUtils.clamp;
+/* browser-only loaders (GLB body, pose clips) are gated on a real DOM; the
+   Node test stubs document as a bare EventTarget */
+const CANVAS = typeof document !== 'undefined' && typeof document.createElement === 'function';
+export const STANCES = ['stone', 'water', 'wind', 'moon'];
+/* the authored pose clips (plan B6), each optional: a missing file leaves
+   that behaviour to the procedural rig and the Quaternius library */
+export const CLIP_NAMES = ['idle_hand_on_hilt', 'saya_hold', 'draw', 'sheathe_chiburi',
+  'stance_stone_idle', 'stance_water_idle', 'stance_wind_idle', 'stance_moon_idle',
+  'attack_stone', 'attack_water', 'attack_wind', 'attack_moon'];
+const DRAW_TIME = .5, SHEATHE_TIME = .4, SHEATHE_CLIP_TIME = .9, SWING_TIME = .85;
 
 // Rapier owns movement collision; mesh queries supply foot placement and camera clearance.
-export function createTempleGameplay({ scene, camera, canvas, wind }) {
+/* `clips` (name → clip JSON) seeds the pose clips without fetching, for tests */
+export function createTempleGameplay({ scene, camera, canvas, wind, clips }) {
   scene.updateMatrixWorld(true);
   const solids = [];
   scene.traverse(o => {
@@ -48,9 +61,22 @@ export function createTempleGameplay({ scene, camera, canvas, wind }) {
   const plantFeet=createFootPlant(samurai);
   const ready=createTemplePhysics(solids,position).then(value=>{if(disposed)value.dispose();else physics=value;});
   let motionStatus='procedural';
-  const animationReady=typeof document.createElement==='function' ? loadAuthoredMotion(samurai).then(value=>{
+  const animationReady=CANVAS ? loadAuthoredMotion(samurai).then(value=>{
     if(disposed)value.dispose();else {motion=value;motionStatus='authored';emit();}
   }).catch(error=>{motionStatus='fallback';console.warn('Authored animation unavailable; procedural samurai retained.',error);emit();}) : Promise.resolve();
+  /* the skinned body wears the same joints; without it the primitives stay */
+  let body=null, bodyStatus='procedural';
+  const bodyReady=CANVAS ? loadBody(samurai).then(value=>{
+    if(disposed)value.dispose();else {body=value;bodyStatus='glb';emit();}
+  }).catch(error=>{console.warn('Skinned body unavailable; procedural samurai retained.',error);emit();}) : Promise.resolve();
+  /* pose clips, each tolerated missing (404 or bad JSON) on its own */
+  let poseClips=createPoseClips(samurai,clips||{}), stance='stone';
+  const clipsReady=CANVAS && typeof fetch==='function' ? Promise.all(CLIP_NAMES.map(name=>fetch(`/anim/clips/${name}.json`)
+    .then(r=>r.ok?r.json():null).catch(()=>null).then(clip=>[name,clip]))).then(entries=>{
+    if(disposed)return;
+    poseClips=createPoseClips(samurai,Object.fromEntries(entries.filter(([,clip])=>clip && clip.keys)));
+    emit();
+  }).catch(error=>console.warn('Pose clips unavailable.',error)) : Promise.resolve();
   const bladePoints=[];
   const trailGeometry=new THREE.BufferGeometry();
   const trailPositions=new Float32Array(12*6*3);trailGeometry.setAttribute('position',new THREE.BufferAttribute(trailPositions,3));trailGeometry.setDrawRange(0,0);
@@ -58,18 +84,22 @@ export function createTempleGameplay({ scene, camera, canvas, wind }) {
   trail.frustumCulled=false;trail.userData.noCollision=true;scene.add(trail);
   const bladeBase=new THREE.Vector3(),bladeTip=new THREE.Vector3();
 
-  function emit() { notify({ active, drawn, sound, motionStatus }); }
+  function emit() { notify({ active, drawn, sound, motionStatus, stance, body: bodyStatus, clips: poseClips.names }); }
   function resetInput() { keys.clear(); dragging = false; speed = 0; gaitSpeed = 0; velocity.set(0,0,0); }
   function pause() { active = false; audio.setActive(false); resetInput(); if(document.pointerLockElement === canvas) document.exitPointerLock(); emit(); }
-  function attack() { if(active && swing <= 0) { if(drawTime>0)return; if(!drawn){drawTime=.5;audio.draw();queuedAttack=true;drawn=true;} else swing=.85; cutSound=false;emit(); } }
-  function toggleSword() { if(active && swing <= 0 && drawTime<=0) { drawn = !drawn; drawTime=.4; audio.draw(); emit(); } }
+  /* the sheathe takes the chiburi's length when that clip is authored */
+  const sheatheTime=()=>poseClips.has('sheathe_chiburi')?SHEATHE_CLIP_TIME:SHEATHE_TIME;
+  function attack() { if(active && swing <= 0) { if(drawTime>0)return; if(!drawn){drawTime=DRAW_TIME;audio.draw();queuedAttack=true;drawn=true;} else swing=SWING_TIME; cutSound=false;emit(); } }
+  function toggleSword() { if(active && swing <= 0 && drawTime<=0) { drawn = !drawn; drawTime=drawn?DRAW_TIME:sheatheTime(); audio.draw(); emit(); } }
+  function setStance(name) { if(!STANCES.includes(name))throw new Error(`Unknown stance: ${name}`); if(stance!==name){stance=name;emit();} return stance; }
   function keydown(e) {
     if (!active) return;
-    if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','KeyE','KeyM','Escape'].includes(e.code)) e.preventDefault();
+    if (['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight','KeyE','KeyM','Escape','Digit1','Digit2','Digit3','Digit4'].includes(e.code)) e.preventDefault();
     keys.add(e.code);
     if(!e.repeat && e.code === 'KeyE') toggleSword();
     if(!e.repeat && e.code === 'Space') attack();
     if(!e.repeat && e.code === 'KeyM') toggleSound();
+    if(!e.repeat && /^Digit[1-4]$/.test(e.code)) setStance(STANCES[Number(e.code[5])-1]);
     if(e.code === 'Escape') pause();
   }
   function toggleSound(){sound=audio.setEnabled(!sound);emit();}
@@ -152,20 +182,48 @@ export function createTempleGameplay({ scene, camera, canvas, wind }) {
       if(swing>0 && swing<.55 && !cutSound){audio.sword();cutSound=true;}
     }
     player.position.copy(position);
-    const pose={speed:gaitSpeed/5.6,run:clamp((gaitSpeed-2.8)/2.8,0,1),turnLean,phase,drawn,wind:wind?.strength.value ?? 1,swing:swing>0?1-swing/.85:-1,time};
+    /* frame order: rig cycle → Quaternius retarget → pose-clip layers →
+       foot IK → skinned body → sword trail → camera */
+    const attackClip=swing>0 && poseClips.has(`attack_${stance}`) ? `attack_${stance}` : null;
+    const swingT=swing>0?1-swing/SWING_TIME:-1;
+    const pose={speed:gaitSpeed/5.6,run:clamp((gaitSpeed-2.8)/2.8,0,1),turnLean,phase,drawn,wind:wind?.strength.value ?? 1,swing:attackClip?-1:swingT,time};
     samurai.update(active?dt:0,pose);
     motion?.update(active?dt:0,pose);
+    /* the authored layers (plan B4). The attack envelope is the one the
+       Quaternius blend uses, so the clip and Sword_Attack never overlap. */
+    const move=THREE.MathUtils.smoothstep(gaitSpeed,.1,.8);
+    const attackWeight=swing>0?Math.min(1,swingT*12,(1-swingT)*10):0;
     if(drawTime>0) {
-      const progress=1-drawTime/(drawn?.5:.4),reach=Math.sin(Math.PI*progress);
-      samurai.joints.rightArm.rotation.x+=reach*.85;
-      samurai.joints.rightArm.rotation.z-=reach*.75;
-      samurai.joints.rightForearm.rotation.x+=reach*.6;
-      const inHand=drawn?progress>.45:progress<.55;
-      samurai.katana.visible=inHand;samurai.sheathedHilt.visible=!inHand;
+      const clipName=drawn?'draw':'sheathe_chiburi', duration=drawn?DRAW_TIME:sheatheTime();
+      const progress=1-drawTime/duration;
+      if(poseClips.has(clipName)) {
+        const ct=progress*poseClips.duration(clipName);
+        poseClips.apply(clipName,ct,clamp(Math.min(progress,1-progress)*8,0,1),'upper');
+        const inHand=poseClips.event(clipName,'katanaInHand',ct);
+        samurai.katana.visible=inHand===undefined?!drawn:!!inHand;
+      } else {
+        const reach=Math.sin(Math.PI*progress);
+        samurai.joints.rightArm.rotation.x+=reach*.85;
+        samurai.joints.rightArm.rotation.z-=reach*.75;
+        samurai.joints.rightForearm.rotation.x+=reach*.6;
+        samurai.katana.visible=drawn?progress>.45:progress<.55;
+      }
+      samurai.sheathedHilt.visible=!samurai.katana.visible;
+    } else if(attackClip) {
+      poseClips.apply(attackClip,swingT*poseClips.duration(attackClip),attackWeight,'full');
+    } else if(!drawn) {
+      poseClips.apply('saya_hold',time,move,'leftArm');
+      poseClips.apply('idle_hand_on_hilt',time,1-move,'arms');
+    } else {
+      /* the stance: whole body at rest, upper body only once the legs are walking */
+      const idle=`stance_${stance}_idle`;
+      poseClips.apply(idle,time,1-attackWeight,'upper');
+      poseClips.apply(idle,time,(1-move)*(1-attackWeight),'lower');
     }
     player.updateMatrixWorld(true);
     plantFeet((x,z,y)=>groundAt(x,z,y-.1),dt,gaitSpeed);
     player.updateMatrixWorld(true);
+    body?.sync();
     if(active && swing>.20 && swing<.57) {
       bladeBase.set(0,0,-.12).applyMatrix4(samurai.katana.matrixWorld);
       bladeTip.set(0,0,-.73).applyMatrix4(samurai.katana.matrixWorld);
@@ -205,14 +263,14 @@ export function createTempleGameplay({ scene, camera, canvas, wind }) {
     if(Math.abs(camera.fov-fov)>.001 || camera.near!==.08) { camera.fov=fov; camera.near=.08; camera.updateProjectionMatrix(); }
   }
   return {
-    update, ready, animationReady, position, toggleSound,
+    update, ready, animationReady, bodyReady, clipsReady, position, toggleSound,
     look(horizontal,vertical=0){yaw+=horizontal;pitch=clamp(pitch+vertical,-.18,.9);},
     recordFrame(raw){if(raw>0 && raw<.3){frameSeconds+=raw;frameCount++;if(frameSeconds>1){fps=Math.round(frameCount/frameSeconds);frameSeconds=frameCount=0;}}},
-    getState(){return {fps,active,drawn,sound,motion:motionStatus,physics:!!physics,position:position.toArray(),speed};},
+    getState(){return {fps,active,drawn,stance,sound,motion:motionStatus,body:bodyStatus,clips:poseClips.names,physics:!!physics,position:position.toArray(),speed};},
     start() { if(!physics || disposed)return; active=true;audio.setActive(true); startedAt=performance.now(); resetInput(); emit(); const result=canvas.requestPointerLock?.(); result?.catch?.(()=>{}); },
-    pause, attack, toggleSword,
+    pause, attack, toggleSword, setStance,
     setKey(key,pressed) { if(pressed && active) keys.add(key); else keys.delete(key); },
     subscribe(fn) { notify=fn; emit(); },
-    dispose() { disposed=true;pause();physics?.dispose();motion?.dispose();audio.dispose();trailGeometry.dispose();trail.material.dispose();scene.remove(trail);listeners.forEach(([el,event,fn])=>el.removeEventListener(event,fn)); },
+    dispose() { disposed=true;pause();physics?.dispose();motion?.dispose();body?.dispose();audio.dispose();trailGeometry.dispose();trail.material.dispose();scene.remove(trail);listeners.forEach(([el,event,fn])=>el.removeEventListener(event,fn)); },
   };
 }
