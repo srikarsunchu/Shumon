@@ -48,7 +48,10 @@ export function deriveFollow(table, find) {
     const name = k ? `DEF-spine.${String(k).padStart(3, '0')}` : 'DEF-spine';
     if (!find(name) || chain.some(([i]) => i === k)) continue;
     const below = [...chain].reverse().find(([i]) => i < k), above = chain.find(([i]) => i > k);
-    if (below && above) out.push([name, below[1], above[1], (k - below[0]) / (above[0] - below[0])]);
+    /* the torso under the cuirass is rigid: segments between the spine and
+       the chest follow the spine outright rather than easing toward the chest,
+       so the skin cannot twist out from under the armour in a hard cut */
+    if (below && above) out.push(above[1] === 'chest' && below[1] === 'spine' ? [name, below[1]] : [name, below[1], above[1], (k - below[0]) / (above[0] - below[0])]);
     else if (below || above) out.push([name, (below || above)[1]]);
   }
   return out;

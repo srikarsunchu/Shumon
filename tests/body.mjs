@@ -80,7 +80,7 @@ assert(Math.abs(jw.y-bw.y)<1e-6,'T-pose arm is level');
 samurai.update(1/60,{speed:.6,run:.2,phase:1.3,drawn:true,swing:.4,time:2});
 samurai.joints.hips.position.y-=.08;
 check('gait frame');
-/* intermediate segments follow their base bone; spine.002 sits between its neighbours */
+/* intermediate segments follow their base bone; the torso under the cuirass is rigid, so spine.002 follows the spine outright */
 const qa=new THREE.Quaternion(), qb=new THREE.Quaternion();
 for(const [name,from,to] of FOLLOW) {
   if(to) continue;
@@ -89,7 +89,7 @@ for(const [name,from,to] of FOLLOW) {
 }
 gltf.bones['DEF-spine.002'].getWorldQuaternion(qa);
 const a=qa.angleTo(body.bones.spine.getWorldQuaternion(new THREE.Quaternion())), b=qa.angleTo(body.bones.chest.getWorldQuaternion(new THREE.Quaternion()));
-assert(Math.abs(a-b)<1e-6,`spine.002 is the half-way slerp: ${a} vs ${b}`);
+assert(a<1e-6 && b>1e-3,`spine.002 follows the spine under the cuirass: ${a} from spine, ${b} from chest`);
 /* toes stay at rest relative to the foot */
 assert(gltf.bones['DEF-toe.L'].quaternion.angleTo(new THREE.Quaternion())<1e-9,'toe untouched');
 body.dispose();

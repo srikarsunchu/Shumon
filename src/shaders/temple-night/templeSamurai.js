@@ -320,7 +320,9 @@ export function createSamurai(opt) {
   const head = bone(neck, 0, .08, 0);
 
   /* ---- under-robe and trousers --------------------------------------- */
-  const torso = add(spine, new THREE.CylinderGeometry(.195, .175, .34, 20), M.silk, 0, .13, 0);
+  /* long enough to run under the sash: it rides the spine with the cuirass,
+     so a forward lean cannot open the small of the back above the hips */
+  const torso = add(spine, new THREE.CylinderGeometry(.195, .17, .48, 20), M.silk, 0, .06, 0);
   torso.scale.z = .78;
   /* the yoke of the kimono over the collarbones, and the collar crossed
      left over right on top of it */
@@ -333,6 +335,11 @@ export function createSamurai(opt) {
   /* the obi, and its knot at the small of the back */
   const obi = add(hips, new THREE.CylinderGeometry(.205, .21, .085, 20), M.obi, 0, .05, 0);
   obi.scale.z = .8;
+  /* the seat of the hakama, from under the sash to the top of the thighs:
+     inside the tassets on the procedural body, but a real pelvis stands
+     proud of the sash behind, and the plates hang with gaps between them */
+  const seat = add(hips, new THREE.CylinderGeometry(.215, .19, .26, 20), M.hakama, 0, -.09, .01);
+  seat.scale.z = .85;
   add(hips, new THREE.BoxGeometry(.16, .07, .06), M.obi, 0, .05, .17);
   add(hips, new THREE.BoxGeometry(.05, .12, .05), M.obi, .07, .01, .175).rotation.z = .4;
   add(hips, new THREE.BoxGeometry(.05, .12, .05), M.obi, -.07, .01, .175).rotation.z = -.4;
@@ -340,7 +347,7 @@ export function createSamurai(opt) {
   /* ---- the dō: five laced rows rising to the breastplate --------------- */
   /* the cuirass was flattened front-to-back for the thin procedural torso;
      over a real chest it deepens instead (see setBodyMode) */
-  const armourParts = [];
+  const armourParts = [obi];
   for (let i = 0; i < 5; i++) {
     const t = i / 4;
     const band = add(spine, new THREE.CylinderGeometry(lerp(.215, .25, t), lerp(.21, .245, t), .076, 24), M.band, 0, .04 + i * .074, 0);
@@ -377,7 +384,7 @@ export function createSamurai(opt) {
   const skinParts = [], hairParts = [];
   /* the cloth a loaded body wears over its own limbs, and the gloves and
      boots it keeps: both are let out in skinned mode so no flesh shows */
-  const clothParts = [torso, yoke], wearParts = [];
+  const clothParts = [torso, yoke, seat], wearParts = [];
 
   /* ---- arms: sleeve, sode, kote, gloved hand -------------------------- */
   const arm = s => {
@@ -701,6 +708,11 @@ export function createSamurai(opt) {
     wearParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.multiplyScalar(bodyMode === 'glb' ? 1.35 : 1); if (m.userData.glove) m.visible = bodyMode !== 'glb'; });
     armourParts.forEach(m => { m.scale.copy(m.userData.baseScale); if (bodyMode === 'glb') { m.scale.z *= 1.24; m.scale.x *= 1.06; } });
     mon.position.z = bodyMode === 'glb' ? -.258 : -.207;
+    /* a cuirass is one rigid shell. Over the skinned body the breastplate,
+       its trim and the crest ride the spine with the laced rows instead of
+       the chest joint, so a twisting cut cannot pull them apart and let the
+       skin through the seam (the loader keeps the skin under it rigid too) */
+    [breast, trim, mon].forEach(m => (bodyMode === 'glb' ? spine : chest).attach(m));
     return bodyMode;
   }
 
