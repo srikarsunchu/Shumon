@@ -74,15 +74,39 @@ function tex(canvasEl, o) {
   return t;
 }
 
+/* ------------------------------------------------------------ palettes
+   The armour's colours, one set per clan. `sakai` is the wanderer's own
+   and is never changed; the gate's fighters wear the others so that the
+   same body under the same hat still reads as another man. plate is the
+   lacquer's lit, mid and shadowed tones; lacing the cord's dark, light and
+   dark; knot the cross-knot and its highlight; the rest are the cloth. */
+export const PALETTES = {
+  sakai:  { base: '#1a2136', plate: [[44, 54, 84], [30, 38, 62], [16, 20, 34]], lacing: ['#7a5a1c', '#e0b652', '#8a6420'],
+            knot: '#8d2c22', knotLight: 'rgba(255,190,170,.25)', silk: '#2a3152', hakama: '#1d1e27', obi: '#93291f',
+            cord: 0x9a2e22, trim: 0xcfa24a, lacquer: 0x121419 },
+  /* black-brown plates under off-white lacing and black knots, a dark grey obi */
+  raider: { base: '#221a14', plate: [[66, 50, 38], [42, 32, 24], [20, 15, 11]], lacing: ['#7e7668', '#e4dac2', '#8c8270'],
+            knot: '#141210', knotLight: 'rgba(255,255,255,.10)', silk: '#2b2622', hakama: '#161519', obi: '#3b3b40',
+            cord: 0x2a2624, trim: 0x8a7a5a, lacquer: 0x17130f },
+  /* grey iron plates laced in red */
+  iron:   { base: '#3b3e44', plate: [[108, 112, 122], [72, 76, 86], [36, 38, 44]], lacing: ['#6a1a14', '#c8382a', '#7a2018'],
+            knot: '#8d2c22', knotLight: 'rgba(255,190,170,.20)', silk: '#2a2426', hakama: '#1b1b1f', obi: '#4c1d19',
+            cord: 0x9a2e22, trim: 0x9c9c9c, lacquer: 0x2a2c30 },
+  /* green-grey plates, ochre lacing, a moss obi */
+  ash:    { base: '#252c26', plate: [[58, 70, 58], [38, 46, 39], [18, 22, 19]], lacing: ['#6e5a20', '#c9a24a', '#7c6626'],
+            knot: '#2c2a26', knotLight: 'rgba(255,255,255,.12)', silk: '#262b25', hakama: '#17191a', obi: '#3d4a36',
+            cord: 0x5a5236, trim: 0xa08a4a, lacquer: 0x171a17 },
+};
+
 /* ------------------------------------------------------------ textures */
 /* one row of lamellae: eight lacquered plates, cord-laced along the top,
    a knot row through the middle. Tiles horizontally. */
-function texLamellar() {
+function texLamellar(pal) {
   const W = 256, H = 64;
   const c = cvs(W, H), x = c.getContext('2d');
   const h = cvs(W, H), hx = h.getContext('2d');
   const r = cvs(W, H), rx = r.getContext('2d');
-  x.fillStyle = '#1a2136'; x.fillRect(0, 0, W, H);
+  x.fillStyle = pal.base; x.fillRect(0, 0, W, H);
   hx.fillStyle = '#808080'; hx.fillRect(0, 0, W, H);
   rx.fillStyle = '#6e6e6e'; rx.fillRect(0, 0, W, H);
   const rnd = mulberry32(19), P = 32;
@@ -90,10 +114,10 @@ function texLamellar() {
     const px = i * P;
     /* the plate: lacquer with a lit left edge and a shadowed right one */
     const g = x.createLinearGradient(px, 0, px + P, 0);
-    const t = .9 + rnd() * .2;
-    g.addColorStop(0, `rgb(${44 * t | 0},${54 * t | 0},${84 * t | 0})`);
-    g.addColorStop(.5, `rgb(${30 * t | 0},${38 * t | 0},${62 * t | 0})`);
-    g.addColorStop(1, `rgb(${16 * t | 0},${20 * t | 0},${34 * t | 0})`);
+    const t = .9 + rnd() * .2, [lit, mid, dark] = pal.plate;
+    g.addColorStop(0, `rgb(${lit[0] * t | 0},${lit[1] * t | 0},${lit[2] * t | 0})`);
+    g.addColorStop(.5, `rgb(${mid[0] * t | 0},${mid[1] * t | 0},${mid[2] * t | 0})`);
+    g.addColorStop(1, `rgb(${dark[0] * t | 0},${dark[1] * t | 0},${dark[2] * t | 0})`);
     x.fillStyle = g; x.fillRect(px, 0, P, H);
     /* seams between plates, and the lower lip of each row */
     x.fillStyle = 'rgba(0,0,0,.65)'; x.fillRect(px + P - 2, 0, 2, H);
@@ -104,16 +128,16 @@ function texLamellar() {
     /* the lacing: two stitches per plate at the top, through the row below */
     [9, 21].forEach(sx => {
       const gg = x.createLinearGradient(px + sx - 3, 0, px + sx + 3, 0);
-      gg.addColorStop(0, '#7a5a1c'); gg.addColorStop(.5, '#e0b652'); gg.addColorStop(1, '#8a6420');
+      gg.addColorStop(0, pal.lacing[0]); gg.addColorStop(.5, pal.lacing[1]); gg.addColorStop(1, pal.lacing[2]);
       x.fillStyle = gg;
       x.beginPath(); x.roundRect(px + sx - 3, 4, 6, 16, 3); x.fill();
       hx.fillStyle = '#e8e8e8'; hx.beginPath(); hx.roundRect(px + sx - 3, 4, 6, 16, 3); hx.fill();
       rx.fillStyle = '#e0e0e0'; rx.fillRect(px + sx - 3, 4, 6, 16);
     });
-    /* the cross-knot, in the clan's red */
-    x.fillStyle = '#8d2c22';
+    /* the cross-knot, in the clan's colour */
+    x.fillStyle = pal.knot;
     x.beginPath(); x.moveTo(px + 15, 30); x.lineTo(px + 22, 36); x.lineTo(px + 15, 42); x.lineTo(px + 8, 36); x.closePath(); x.fill();
-    x.fillStyle = 'rgba(255,190,170,.25)'; x.fillRect(px + 13, 33, 4, 2);
+    x.fillStyle = pal.knotLight; x.fillRect(px + 13, 33, 4, 2);
     hx.fillStyle = '#c0c0c0'; hx.beginPath(); hx.moveTo(px + 15, 30); hx.lineTo(px + 22, 36); hx.lineTo(px + 15, 42); hx.lineTo(px + 8, 36); hx.closePath(); hx.fill();
     rx.fillStyle = '#d8d8d8'; rx.fillRect(px + 8, 30, 14, 12);
   }
@@ -226,7 +250,7 @@ function texHead() {
 }
 
 /* the clan crest on the breastplate: a gold ring about a five-petal bloom */
-function texMon() {
+function texMon(P) {
   const S = 64, c = cvs(S, S), x = c.getContext('2d');
   x.clearRect(0, 0, S, S);
   x.strokeStyle = '#d5aa4c'; x.lineWidth = 3.5;
@@ -238,7 +262,7 @@ function texMon() {
     x.beginPath(); x.ellipse(13, 0, 9, 5.5, 0, 0, TAU); x.fill();
     x.restore();
   }
-  x.fillStyle = '#1a2136'; x.beginPath(); x.arc(S / 2, S / 2, 4.5, 0, TAU); x.fill();
+  x.fillStyle = P.base; x.beginPath(); x.arc(S / 2, S / 2, 4.5, 0, TAU); x.fill();
   return c;
 }
 
@@ -252,55 +276,72 @@ function texStraw() {
   return c;
 }
 
-/* --------------------------------------------------------- the figure */
+/* the painted textures, generated once per palette and shared by every
+   figure wearing it (materials stay per figure, so one fighter's fade never
+   touches another). The wanderer's `sakai` set is exactly the one it always
+   had; a fighter in `raider` never touches it. */
+const LIB = new Map();
+function library(name) {
+  if (LIB.has(name)) return LIB.get(name);
+  const P = PALETTES[name] || PALETTES.sakai;
+  const lam = texLamellar(P);
+  const lamSet = repeat => ({
+    map: tex(lam.map, { repeat }), normal: tex(lam.normal, { repeat, srgb: false }), rough: tex(lam.rough, { repeat, srgb: false })
+  });
+  const shared = LIB.get('*') || { ito: tex(texIto(), { repeat: [1, 2] }), head: tex(texHead()), straw: tex(texStraw(), { repeat: [12, 1] }) };
+  LIB.set('*', shared);
+  const set = {
+    band: lamSet([6, 1]), plate: lamSet([1, 4]), sode: lamSet([2, 1]),
+    silk: tex(texSilk(P.silk, 5), { repeat: [3, 3] }), hakama: tex(texSilk(P.hakama, 9), { repeat: [3, 3] }),
+    obi: tex(texSilk(P.obi, 13), { repeat: [4, 1] }), mon: tex(texMon(P)), ...shared,
+  };
+  LIB.set(name, set);
+  return set;
+}
+
+/* --------------------------------------------------------- the figure
+   opt: { hat, mask, palette: a PALETTES key, lights (the two face lights,
+   default on) } */
 export function createSamurai(opt) {
   opt = opt || {};
   const group = new THREE.Group();
   const meshes = [];
+  const paletteName = PALETTES[opt.palette] ? opt.palette : 'sakai', P = PALETTES[paletteName];
 
-  /* materials — every set generated once */
+  /* materials — one set per figure over the palette's shared textures */
   let M;
   if (CANVAS) {
-    const lam = texLamellar();
-    const lamBand = {
-      map: tex(lam.map, { repeat: [6, 1] }), normal: tex(lam.normal, { repeat: [6, 1], srgb: false }),
-      rough: tex(lam.rough, { repeat: [6, 1], srgb: false })
-    };
-    const lamPlate = {
-      map: tex(lam.map, { repeat: [1, 4] }), normal: tex(lam.normal, { repeat: [1, 4], srgb: false }),
-      rough: tex(lam.rough, { repeat: [1, 4], srgb: false })
-    };
-    const lamSode = {
-      map: tex(lam.map, { repeat: [2, 1] }), normal: tex(lam.normal, { repeat: [2, 1], srgb: false }),
-      rough: tex(lam.rough, { repeat: [2, 1], srgb: false })
-    };
+    const T = library(paletteName);
     const lamellar = t => new THREE.MeshStandardMaterial({
       map: t.map, normalMap: t.normal, roughnessMap: t.rough, normalScale: new THREE.Vector2(.9, .9),
       roughness: 1, metalness: .18, color: 0xffffff
     });
     M = {
-      band: lamellar(lamBand), plate: lamellar(lamPlate), sode: lamellar(lamSode),
-      lacquer: new THREE.MeshStandardMaterial({ color: 0x121419, roughness: .5, metalness: .2 }),
-      silk: new THREE.MeshStandardMaterial({ map: tex(texSilk('#2a3152', 5), { repeat: [3, 3] }), roughness: .82, metalness: 0 }),
-      hakama: new THREE.MeshStandardMaterial({ map: tex(texSilk('#1d1e27', 9), { repeat: [3, 3] }), roughness: .95, metalness: 0 }),
-      obi: new THREE.MeshStandardMaterial({ map: tex(texSilk('#93291f', 13), { repeat: [4, 1] }), roughness: .78, metalness: 0 }),
-      cord: new THREE.MeshStandardMaterial({ color: 0x9a2e22, roughness: .8 }),
-      gold: new THREE.MeshStandardMaterial({ color: 0xcfa24a, roughness: .36, metalness: .72 }),
+      band: lamellar(T.band), plate: lamellar(T.plate), sode: lamellar(T.sode),
+      lacquer: new THREE.MeshStandardMaterial({ color: P.lacquer, roughness: .5, metalness: .2 }),
+      silk: new THREE.MeshStandardMaterial({ map: T.silk, roughness: .82, metalness: 0 }),
+      hakama: new THREE.MeshStandardMaterial({ map: T.hakama, roughness: .95, metalness: 0 }),
+      mask: new THREE.MeshStandardMaterial({ map: T.hakama, roughness: .95, metalness: 0, side: THREE.DoubleSide }),
+      obi: new THREE.MeshStandardMaterial({ map: T.obi, roughness: .78, metalness: 0 }),
+      cord: new THREE.MeshStandardMaterial({ color: P.cord, roughness: .8 }),
+      gold: new THREE.MeshStandardMaterial({ color: P.trim, roughness: .36, metalness: .72 }),
       iron: new THREE.MeshStandardMaterial({ color: 0x2c2f33, roughness: .55, metalness: .6 }),
       steel: new THREE.MeshStandardMaterial({ color: 0xd8dee0, roughness: .22, metalness: .62, emissive: 0x1e2428, emissiveIntensity: 1 }),
-      head: new THREE.MeshStandardMaterial({ map: tex(texHead()), roughness: .72, metalness: 0 }),
+      head: new THREE.MeshStandardMaterial({ map: T.head, roughness: .72, metalness: 0 }),
       skin: new THREE.MeshStandardMaterial({ color: 0xb08260, roughness: .75 }),
       hair: new THREE.MeshStandardMaterial({ color: 0x1a1310, roughness: .68 }),
       glove: new THREE.MeshStandardMaterial({ color: 0x1b1c22, roughness: .9 }),
-      mon: new THREE.MeshStandardMaterial({ map: tex(texMon()), transparent: true, roughness: .4, metalness: .6 }),
-      straw: new THREE.MeshStandardMaterial({ map: tex(texStraw(), { repeat: [12, 1] }), roughness: 1, side: THREE.DoubleSide })
+      mon: new THREE.MeshStandardMaterial({ map: T.mon, transparent: true, roughness: .4, metalness: .6 }),
+      straw: new THREE.MeshStandardMaterial({ map: T.straw, roughness: 1, side: THREE.DoubleSide }),
+      ito: new THREE.MeshStandardMaterial({ map: T.ito, roughness: .85 }),
     };
   } else {
     const flat = c => new THREE.MeshStandardMaterial({ color: c });
-    M = { band: flat(0x1a2136), plate: flat(0x1a2136), sode: flat(0x1a2136), lacquer: flat(0x15171d), silk: flat(0x2a3152),
-      hakama: flat(0x1d1e27), obi: flat(0x93291f), cord: flat(0x9a2e22), gold: flat(0xcfa24a), iron: flat(0x2c2f33),
+    const hex = c => parseInt(c.slice(1), 16);
+    M = { band: flat(hex(P.base)), plate: flat(hex(P.base)), sode: flat(hex(P.base)), lacquer: flat(P.lacquer), silk: flat(hex(P.silk)),
+      hakama: flat(hex(P.hakama)), mask: flat(hex(P.hakama)), obi: flat(hex(P.obi)), cord: flat(P.cord), gold: flat(P.trim), iron: flat(0x2c2f33),
       steel: flat(0xd8dee0), head: flat(0xb08260), skin: flat(0xb08260), hair: flat(0x1a1310), glove: flat(0x1b1c22),
-      mon: flat(0xcfa24a), straw: flat(0x9a8354) };
+      mon: flat(P.trim), straw: flat(0x9a8354), ito: flat(0x1b1c22) };
   }
 
   const bone = (parent, x, y, z) => { const b = new THREE.Group(); b.position.set(x, y, z); parent.add(b); return b; };
@@ -458,15 +499,29 @@ export function createSamurai(opt) {
   });
   hairParts.forEach(h => { h.userData.restY = h.position.y; });
   const CROWN_Y = .025 + .112 * 1.1;                 /* top of the skull, in head space */
+  const HAT_Y = .13;
   let hat = null;
   if (opt.hat) {
-    hat = new THREE.Group(); hat.position.set(0, .13, -.005); hat.rotation.x = .10; head.add(hat);
+    hat = new THREE.Group(); hat.position.set(0, HAT_Y, -.005); hat.rotation.x = .10; head.add(hat);
     const crown = add(hat, new THREE.ConeGeometry(.40, .17, 32, 1, true), M.straw, 0, .0, 0);
     crown.castShadow = true;
     add(hat, new THREE.ConeGeometry(.395, .16, 32, 1, true), M.hakama, 0, -.004, 0);
     add(hat, new THREE.CylinderGeometry(.03, .03, .05, 8), M.hakama, 0, .10, 0);
     const cord = add(hat, new THREE.CylinderGeometry(.006, .006, .26, 5), M.cord, 0, -.13, -.09);
     cord.rotation.x = -.1;
+  }
+  /* the mask: a cloth tied over the nose and mouth, ear to ear, so a face
+     shared with the wanderer stays hidden. A tapered half-cylinder about
+     the head's axis, open toward the front (−z); setBodyMode refits it to
+     the loaded skull, which is narrower than the sphere and sits higher */
+  let mask = null;
+  if (opt.mask) {
+    mask = add(head, new THREE.CylinderGeometry(.121, .104, .10, 20, 1, true, Math.PI * .42, Math.PI * 1.16), M.mask, 0, -.018, .002);
+    mask.userData.rest = { y: mask.position.y, z: mask.position.z };
+    /* the knot at the nape */
+    const tie = add(head, new THREE.BoxGeometry(.03, .022, .018), M.mask, 0, .02, .118);
+    tie.userData.rest = { y: tie.position.y, z: tie.position.z }; tie.userData.tie = true;
+    mask.userData.tie = tie;
   }
 
   /* ---- the katana. Blade forward (−z) from the guard. ----------------- */
@@ -491,7 +546,7 @@ export function createSamurai(opt) {
   function hilt(parent) {
     const tsuba = add(parent, new THREE.CylinderGeometry(.037, .037, .0055, 18), M.iron, 0, 0, .004);
     tsuba.rotation.x = Math.PI / 2; tsuba.scale.x = .9;
-    const tsuka = add(parent, new THREE.CylinderGeometry(.0135, .0125, .255, 10), CANVAS ? new THREE.MeshStandardMaterial({ map: tex(texIto(), { repeat: [1, 2] }), roughness: .85 }) : M.glove, 0, 0, .135);
+    const tsuka = add(parent, new THREE.CylinderGeometry(.0135, .0125, .255, 10), M.ito, 0, 0, .135);
     tsuka.rotation.x = Math.PI / 2; tsuka.scale.x = 1.35;
     const kashira = add(parent, new THREE.CylinderGeometry(.015, .015, .012, 10), M.iron, 0, 0, .268);
     kashira.rotation.x = Math.PI / 2; kashira.scale.x = 1.35;
@@ -524,11 +579,14 @@ export function createSamurai(opt) {
   /* the saya group's +z is toward the tip; the hilt group is turned so its
      +z (the tsuka) runs out of the mouth the other way */
 
-  /* ---- a little light of his own, so the face reads under the moon ---- */
-  const fill = new THREE.PointLight(0x9fb8c8, .22, 3.2, 2);
-  fill.position.set(.3, 2.2, 1.1); group.add(fill);
-  const rim = new THREE.PointLight(0xff9a50, .22, 3, 2);
-  rim.position.set(-.7, 1.9, -1.1); group.add(rim);
+  /* ---- a little light of his own, so the face reads under the moon
+     (a crowd of fighters goes without: every light recompiles every material) */
+  if (opt.lights !== false) {
+    const fill = new THREE.PointLight(0x9fb8c8, .22, 3.2, 2);
+    fill.position.set(.3, 2.2, 1.1); group.add(fill);
+    const rim = new THREE.PointLight(0xff9a50, .22, 3, 2);
+    rim.position.set(-.7, 1.9, -1.1); group.add(rim);
+  }
 
   /* ------------------------------------------------------------- pose
      Joint conventions, for anyone editing the cycle: a limb hangs down −y,
@@ -542,7 +600,12 @@ export function createSamurai(opt) {
   function update(dt, s) {
     breath += dt;
     const amp = clamp(s.speed, 0, 1), p = s.phase, run = typeof s.run === "number" ? clamp(s.run, 0, 1) : s.run ? 1 : 0;
-    const drawn = s.drawn, sw = s.swing === undefined ? -1 : s.swing;
+    const drawn = s.drawn;
+    /* the telegraph (0..1, an enemy's wind-up) is the first part of the
+       cut held: the blade rises over the shoulder and waits there (.2 of
+       the swing, the same TELL templeAnimation.js holds the library at) */
+    const tell = typeof s.telegraph === 'number' && s.telegraph > 0 ? clamp(s.telegraph, 0, 1) * .2 : -1;
+    const sw = s.swing !== undefined && s.swing >= 0 ? s.swing : tell;
     const attacking = sw >= 0;
     const t = s.time !== undefined ? s.time : breath;
 
@@ -563,6 +626,7 @@ export function createSamurai(opt) {
     hips.position.y = hipY - .028 * amp - run * .03 + .035 * amp * Math.abs(Math.cos(p))
                     + (drawn && amp < .05 ? -.03 : 0);
     hips.position.x = Math.sin(p) * .012 * amp;
+    hips.position.z = 0;                              /* every layer above adds to a fresh frame */
     hips.rotation.y = Math.sin(p) * (.10 + run * .06) * amp;
     hips.rotation.z = Math.sin(p) * .04 * amp;
     /* the torso leans into the run and counters the hips */
@@ -694,6 +758,8 @@ export function createSamurai(opt) {
     const sc = o.scale || 1;
     /* the knot grows with the skull; the strands are already hair-thin */
     hairParts.forEach(h => { h.position.y = h.userData.restY + dy; h.scale.setScalar(h.userData.s ? 1 : sc); });
+    /* the hat rides the crown too, without the hair's extra lift */
+    if (hat) hat.position.y = HAT_Y + dy - (o.lift || 0);
   }
   let bodyMode = 'procedural';
   [...clothParts, ...wearParts, ...armourParts].forEach(m => { m.userData.baseScale = m.scale.clone(); });
@@ -708,6 +774,13 @@ export function createSamurai(opt) {
     wearParts.forEach(m => { m.scale.copy(m.userData.baseScale); m.scale.multiplyScalar(bodyMode === 'glb' ? 1.35 : 1); if (m.userData.glove) m.visible = bodyMode !== 'glb'; });
     armourParts.forEach(m => { m.scale.copy(m.userData.baseScale); if (bodyMode === 'glb') { m.scale.z *= 1.24; m.scale.x *= 1.06; } });
     mon.position.z = bodyMode === 'glb' ? -.258 : -.207;
+    /* the loaded skull: narrower than the sphere, the face further forward of the neck, the eyes higher */
+    if (mask) {
+      const glb = bodyMode === 'glb', tie = mask.userData.tie;
+      mask.scale.set(glb ? .78 : 1, glb ? 1.0 : 1, glb ? .84 : 1);
+      mask.position.set(0, mask.userData.rest.y + (glb ? .028 : 0), mask.userData.rest.z + (glb ? -.012 : 0));
+      tie.position.set(0, tie.userData.rest.y + (glb ? .03 : 0), tie.userData.rest.z + (glb ? -.03 : 0));
+    }
     /* a cuirass is one rigid shell. Over the skinned body the breastplate,
        its trim and the crest ride the spine with the laced rows instead of
        the chest joint, so a twisting cut cannot pull them apart and let the
@@ -716,7 +789,7 @@ export function createSamurai(opt) {
     return bodyMode;
   }
 
-  return { group, update, meshes, height:1.74, joints,
+  return { group, update, meshes, height:1.74, joints, palette: paletteName, hat, mask,
     legs:[LL,RL], katana, saya, sheathedHilt, grip, skinParts, hairParts, clothParts, wearParts,
     fitSkeleton, fitHair, setBodyMode, get bodyMode() { return bodyMode; }, get hipY() { return hipY; },
   };

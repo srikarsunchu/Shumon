@@ -1,4 +1,6 @@
-# Temple Night
+# Shumon (朱門)
+
+A short samurai duel game in the browser: hold the vermilion gate of a mountain temple through three waves under a blood moon. The scene and repository keep their working name, Temple Night.
 
 A procedural Three.js (r149) night scene: a mountain temple at the head of a
 forty-step flight, a blood moon, rain, drifting haze, falling maple leaves and

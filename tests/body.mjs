@@ -95,6 +95,18 @@ assert(gltf.bones['DEF-toe.L'].quaternion.angleTo(new THREE.Quaternion())<1e-9,'
 body.dispose();
 assert.equal(samurai.bodyMode,'procedural'); assert(samurai.skinParts.every(m=>m.visible),'skin parts restored');
 assert(!samurai.group.children.includes(gltf.scene),'body removed');
+/* a fighter's body: no face painting, the mask refitted to the skull, hair hidden under the hat */
+{
+  const rig=createSamurai({hat:true,mask:true,palette:'raider',lights:false}); scene.add(rig.group);
+  const restY=rig.mask.position.y, hatY=rig.hat.position.y;
+  const b=await loadBody(rig,{gltf:synthetic(),meta:{},height:1.74,face:false});
+  assert.equal(b.face,false); assert.equal(rig.bodyMode,'glb');
+  assert(rig.mask.position.y>restY && rig.mask.scale.x<1,'the mask sits higher and narrower on the loaded skull');
+  assert(rig.hat.position.y!==hatY,'the hat rides the taller crown');
+  b.sync(); b.dispose();
+  assert(Math.abs(rig.mask.position.y-restY)<1e-9 && rig.mask.scale.x===1,'the mask returns to the sphere');
+  scene.remove(rig.group);
+}
 /* a missing bone names what is available */
 await assert.rejects(loadBody(samurai,{gltf:synthetic(),meta:{},bones:{...BONES,head:'DEF-nope'}}),/DEF-nope.*Available:.*DEF-spine\.006/s);
-console.log('PASS: body binding: zero pose, T-pose, gait frame with hip bob, follow segments, dispose, bone errors.');
+console.log('PASS: body binding: zero pose, T-pose, gait frame with hip bob, follow segments, dispose, a fighter without face painting, bone errors.');

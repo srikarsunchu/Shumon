@@ -1,6 +1,38 @@
 /* Shared scene styles. Only the rules the temple-night scene uses are kept
    here; the rest of the threeui stylesheet belongs to other components. */
 
+/* Self-hosted OFL faces (public/fonts, licenses alongside). Latin subsets of
+   the variable files; the JP serif carries the stance glyphs, the seal, the
+   title kanji and the chapter numerals. */
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("/fonts/CormorantGaramond-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("/fonts/CormorantGaramond-Italic-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Jost";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/Jost-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Noto Serif JP";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/fonts/NotoSerifJP-glyphs.woff2") format("woff2");
+}
+
 .temple-night-scene,
 .temple-night-canvas {
   display: block;
@@ -9,21 +41,65 @@
 }
 
 .temple-night-scene {
+  /* Ground truth: Ghost of Tsushima menus and HUD, sampled 2026-09-09
+     (see ~/workspace/sri-design/references/ghost-of-tsushima-hud.md);
+     the ink and the seal are the values docs/INTRO.md §4 sets. */
+  --ink: #e8e0cc;                       /* off-white on black */
+  --ink-2: rgba(232, 224, 204, .78);
+  --ink-3: rgba(232, 224, 204, .5);
+  --hair: rgba(232, 224, 204, .18);
+  --black: #080808;
+  --scrim: rgba(8, 8, 8, .72);
+  --red: #913f33;                       /* the seal, and nothing else */
+
+  --edge-x: 40px;
+  --edge-y: 32px;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px;
+
+  --t-12: 12px; --t-13: 13px; --t-14: 14px;
+  --t-card: clamp(32px, 5vw, 44px);      /* card titles */
+  --t-title: clamp(56px, 9vw, 96px);     /* SHUMON */
+  --track-ui: -.15px;
+  --track-caps: .18em;                  /* Cormorant caps: title, cards */
+  --track-hint: .2em;                   /* Jost caps: hints, labels, prompts */
+  --track-caps-tight: .08em;
+
+  --sans: "Jost", "Gill Sans", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --jp: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+
+  /* two curves, one ladder; cuts are the one linear */
+  --ease-std: cubic-bezier(.4, 0, .2, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --d-hover: 120ms;          /* hover, HUD wake, letterbox in */
+  --d-press: 200ms;          /* press, letterbox out, banner */
+  --d-cut: 250ms;            /* title → black, linear */
+  --d-hud-in: 400ms;         /* HUD draws in; the return to the title */
+  --d-card-out: 500ms;       /* a card slides 12 px and fades */
+  --d-title: 600ms;          /* title and cards in: opacity + 8 px rise; death desaturation */
+  --d-hud: 800ms;            /* HUD to rest */
+  --d-fade: 900ms;           /* black ↔ scene */
+  --d-result: 1200ms;        /* the standoff result line; death to black */
+  --hold-victory: 1500ms;    /* the hold on the last body before black */
+  --hud-rest: .35;
+  --letterbox: max(11%, 56px);
+
   position: relative;
   overflow: hidden;
-  background: #05070a;
+  background: var(--black);
+  color: var(--ink);
+  font: 400 var(--t-13)/1.4 var(--sans);
+  letter-spacing: var(--track-ui);
+  -webkit-font-smoothing: antialiased;
 }
 
 .temple-night-canvas {
   position: relative;
   z-index: 1;
-  opacity: 0;
   touch-action: none;
+  transition: filter var(--d-title) var(--ease-std);
 }
-
-.temple-night-canvas.is-ready {
-  opacity: 1;
-}
+.temple-night-canvas.is-dying { filter: saturate(0); }
 
 .temple-night-unavailable {
   position: absolute;
@@ -31,33 +107,431 @@
   display: grid;
   place-items: center;
   margin: 0;
-  color: #a9b2b7;
-  background: #05070a;
+  color: var(--ink-2);
+  background: var(--black);
 }
 
-.game-brand,.game-entry,.game-controls,.pause-button,.touch-controls { position:absolute; z-index:2; color:#eee9dc; }
-.game-brand { top:32px; left:40px; display:flex; align-items:center; gap:14px; font:12px/1.2 system-ui,sans-serif; letter-spacing:.24em; pointer-events:none; }
-.brand-mark { display:grid; place-items:center; width:30px; height:36px; background:#913f33; font:23px/1 Georgia,serif; }
-.game-entry { inset:0; background:linear-gradient(90deg,rgba(3,9,13,.86),rgba(3,9,13,.38) 42%,transparent 75%); display:flex; align-items:center; padding:80px 8vw; box-sizing:border-box; }
-.entry-content { max-width:470px; }
-.eyebrow { font:12px/1.5 system-ui,sans-serif; letter-spacing:.3em; color:#c0b6a0; }
-.game-entry h1 { font:clamp(64px,8.6vw,132px)/.88 Georgia,serif; letter-spacing:-.055em; font-weight:400; margin:28px 0; }
-.game-entry h1 em { font-weight:400; color:#c9b898; }
-.entry-rule { width:44px; height:2px; background:#a65040; margin:30px 0; }
-.entry-description { font:17px/1.8 Georgia,serif; color:#cecbbf; }
-.enter-button { display:flex; align-items:center; justify-content:space-between; gap:44px; margin-top:30px; padding:17px 20px; min-width:245px; border:1px solid #bbaa8970; color:#f0eadb; background:#b8a18112; font:14px system-ui,sans-serif; cursor:pointer; }
-.enter-button:hover { background:#b8a18130; border-color:#ccb994; }
-.enter-button:disabled { opacity:.5; cursor:wait; }
-.entry-hint { max-width:360px; font:12px/1.8 system-ui,sans-serif; color:#b0b6b4; margin-top:20px; }
-.edition { position:absolute; bottom:30px; right:40px; font:12px system-ui,sans-serif; letter-spacing:.2em; color:#b0b6b4; }
-.pause-button { top:32px; right:32px; background:#09101490; border:1px solid #ffffff30; padding:10px 14px; font:14px system-ui,sans-serif; cursor:pointer; }
-.game-controls { bottom:28px; left:50%; transform:translateX(-50%); display:flex; gap:24px; white-space:nowrap; background:#071015b0; padding:14px 22px; border-top:1px solid #bbaa8940; font:12px system-ui,sans-serif; }
-kbd { font:inherit; color:#eddfc4; margin-right:6px; }
-button:focus-visible { outline:2px solid #eddfc4; outline-offset:5px; }
-.touch-controls { display:none; }
-@media(max-width:700px) { .game-brand { top:24px; left:24px; } .game-entry { padding:85px 26px; } .game-entry h1 { font-size:80px; } .edition { right:24px; bottom:20px; } .game-controls { gap:12px; font-size:12px; white-space:normal; width:85%; flex-wrap:wrap; justify-content:center; } }
-@media(hover:none) { .game-controls { display:none; } .touch-controls { display:flex; bottom:35px; left:20px; right:20px; align-items:end; justify-content:space-between; } .touch-controls button { background:#0b141bb0; color:#f0eadb; border:1px solid #cdbd9960; min-width:48px; min-height:48px; touch-action:none; font-size:18px; } .touch-move { display:grid; grid-template-columns:repeat(3,48px); gap:5px; } .touch-move button:first-child { grid-column:2; } .touch-move button:nth-child(2) { grid-column:1; } }
-@media(max-height:650px) { .game-entry h1 { font-size:66px; margin:16px 0; } .entry-rule { margin:16px 0; } .entry-description { margin:10px 0; } .enter-button { margin-top:16px; } .entry-hint { margin-top:12px; } }
+/* ---- shared pieces ---------------------------------------------------- */
 
-.sound-button {position:absolute;z-index:3;top:32px;right:158px;background:#09101490;color:#eee9dc;border:1px solid #ffffff30;padding:10px 14px;font:14px system-ui,sans-serif;cursor:pointer;}
-@media(max-width:700px){.sound-button{top:78px;right:32px;}}
+.temple-night-scene kbd {
+  font: inherit;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: var(--track-caps-tight);
+  font-variant-numeric: tabular-nums;
+}
+.temple-night-scene button {
+  font: 400 var(--t-13)/1 var(--sans);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--d-hover) var(--ease-std), transform var(--d-press) var(--ease-std);
+}
+.temple-night-scene button:hover { color: var(--ink); }
+.temple-night-scene button:active { transform: scale(.97); }
+.temple-night-scene button:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
+
+.tn-hair { width: 100%; height: 1px; background: var(--hair); }
+
+.tn-seal {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--red);
+  color: var(--ink);
+  font: 500 17px/1 var(--jp);
+}
+.tn-seal-small { width: 8px; height: 8px; }
+.tn-seal-loader {
+  position: absolute; z-index: 6;
+  left: 0; right: 0; bottom: var(--edge-y);
+  margin: 0 auto;
+  opacity: .3;
+}
+
+/* thin rules used for health: a 2px track with a scaled fill */
+.tn-rule { position: relative; height: 2px; background: var(--hair); overflow: hidden; }
+.tn-rule > span {
+  position: absolute; inset: 0;
+  background: var(--ink);
+  transform-origin: left center;
+  transition: transform var(--d-press) var(--ease-std);
+}
+
+/* ---- the black layer -------------------------------------------------- */
+
+/* Boot and loading sit on it; the gesture cuts to it; the chapter card and
+   the end cards stand on it; the fades lift it. */
+.tn-black {
+  position: absolute; inset: 0; z-index: 5;
+  background: var(--black);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--d-fade) var(--ease-std);
+}
+.tn-black[data-on="on"] { opacity: 1; }
+.tn-black[data-mode="boot"], .tn-black[data-mode="loading"] { transition: none; }
+.tn-black[data-mode="cut"] { transition-duration: var(--d-cut); transition-timing-function: linear; }
+.tn-black[data-mode="dying"] { transition-duration: var(--d-result); }
+.tn-black[data-mode="won"] { transition-delay: var(--hold-victory); }
+.tn-black[data-mode="toTitle"] { transition-duration: var(--d-hud-in); }
+
+/* ---- brand ------------------------------------------------------------ */
+
+.tn-brand {
+  position: absolute; z-index: 7;
+  top: var(--edge-y); left: var(--edge-x);
+  display: flex; align-items: center; gap: var(--s3);
+  font-size: var(--t-12);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  pointer-events: none;
+  animation: tn-fade-in var(--d-title) var(--ease-std) both;
+}
+
+/* ---- the entry: one stroke, first the loader then the title's rule ----- */
+
+.tn-entry {
+  position: absolute; z-index: 6;
+  left: 0; right: 0; top: 46%;
+  margin: 0 auto;
+  width: min(520px, calc(100% - var(--edge-x) * 2));
+  pointer-events: none;
+}
+.tn-stroke { display: block; width: 100%; height: 12px; margin-top: -6px; overflow: visible; }
+.tn-stroke path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.tn-entry-above {
+  position: absolute; left: 0; bottom: 100%;
+  margin-bottom: var(--s3);
+  font: 500 calc(var(--t-title) * .6)/1 var(--jp);
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(8px);
+  visibility: hidden;
+}
+.tn-entry-below { position: relative; padding-top: var(--s3); }
+.tn-stage {
+  position: absolute; left: 0; top: var(--s3);
+  font-size: var(--t-13);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  transition: opacity var(--d-title) var(--ease-std);
+}
+.tn-entry.is-done .tn-stage { opacity: 0; }
+.tn-entry.is-title .tn-stage { visibility: hidden; }
+.tn-title-name {
+  margin: 0;
+  font: 500 var(--t-title)/1 var(--serif);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tn-title-sub {
+  margin-top: var(--s3);
+  font-size: var(--t-13);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.tn-title-name, .tn-title-sub, .tn-prompt { opacity: 0; transform: translateY(8px); visibility: hidden; }
+.tn-entry.is-title .tn-entry-above, .tn-entry.is-title .tn-title-name, .tn-entry.is-title .tn-title-sub {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  transition: opacity var(--d-title) var(--ease-std), transform var(--d-title) var(--ease-std);
+}
+.tn-prompt {
+  margin-top: var(--s8);
+  font-size: var(--t-13);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tn-entry.is-title[data-prompt="on"] .tn-prompt {
+  visibility: visible;
+  transform: none;
+  animation: tn-pulse 1.6s cubic-bezier(.45, 0, .55, 1) infinite;
+}
+
+/* ---- HUD -------------------------------------------------------------- */
+
+.tn-hud {
+  position: absolute; inset: 0; z-index: 4;
+  pointer-events: none;
+  opacity: var(--hud-rest);
+  transition: opacity var(--d-hud) var(--ease-std);
+  animation: tn-fade-in var(--d-hud-in) var(--ease-std) backwards;
+}
+.tn-hud.is-awake { opacity: 1; transition-duration: var(--d-hover); }
+
+.tn-hud-corner { position: absolute; }
+.tn-hud-tr { top: var(--edge-y); right: var(--edge-x); text-align: right; width: 200px; }
+.tn-hud-bl { bottom: var(--edge-y); left: var(--edge-x); width: 240px; }
+
+.tn-wave {
+  font-size: var(--t-12);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.tn-target { margin-top: var(--s3); }
+.tn-rule-target > span { background: var(--ink-2); }
+.tn-target-name {
+  margin-top: var(--s2);
+  font-size: var(--t-12);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.tn-stances { display: flex; align-items: baseline; gap: var(--s3); margin-bottom: var(--s3); animation: tn-fade-in var(--d-title) var(--ease-std) backwards; }
+.tn-stance {
+  font: 500 var(--t-14)/1 var(--jp);
+  color: var(--ink-3);
+  transition: color var(--d-hover) var(--ease-std);
+}
+.tn-stance.is-active { color: var(--ink); }
+.tn-stance.is-wanted { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--ink-2); }
+.tn-stance.is-pulse { animation: tn-pulse-once var(--d-title) var(--ease-std) both; }
+.tn-health { display: flex; align-items: center; gap: var(--s2); }
+.tn-health .tn-rule { flex: 1; animation: tn-draw var(--d-hud-in) var(--ease-std) backwards; }
+
+/* ---- letterbox, hints, results, banners ------------------------------- */
+
+.tn-letterbox {
+  position: absolute; left: 0; right: 0; z-index: 3;
+  height: var(--letterbox);
+  background: var(--black);
+  transform: scaleY(0);
+  transition: transform var(--d-press) var(--ease-std);
+}
+.tn-letterbox-top { top: 0; transform-origin: top; }
+.tn-letterbox-bottom { bottom: 0; transform-origin: bottom; }
+.tn-letterbox.is-on { transform: scaleY(1); transition-duration: var(--d-hover); }
+
+/* one line, centred in the lower bar's band; a rule each side, never a box */
+.tn-hint {
+  position: absolute; z-index: 5;
+  left: 0; right: 0;
+  bottom: calc(var(--letterbox) / 2);
+  transform: translateY(50%);
+  display: flex; justify-content: center; align-items: center; gap: var(--s4);
+  font-size: var(--t-13);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink);
+  pointer-events: none;
+  animation: tn-fade-in var(--d-press) var(--ease-std) both;
+}
+.tn-hint-rule { width: 40px; height: 1px; background: var(--ink-2); }
+
+.tn-result {
+  position: absolute; z-index: 5;
+  left: 0; right: 0; top: 24%;
+  text-align: center;
+  font: 500 var(--t-card)/1 var(--serif);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink);
+  pointer-events: none;
+  animation: tn-result var(--d-result) var(--ease-std) both;
+}
+
+.tn-banner {
+  position: absolute; z-index: 5;
+  left: 0; right: 0; top: 24%;
+  text-align: center;
+  font-size: var(--t-14);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity var(--d-press) var(--ease-std);
+  pointer-events: none;
+}
+.tn-banner.is-on { opacity: 1; }
+
+/* ---- chapter cards ---------------------------------------------------- */
+
+/* On black for the chapter (centred); in the world for waves two and three
+   (the location-title slot). The body is carried 6 px over the hold; the
+   container owns the entrance and the exit. */
+.tn-chapter {
+  position: absolute; inset: 0; z-index: 6;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 var(--edge-x);
+  pointer-events: none;
+  animation: tn-rise var(--d-title) var(--ease-std) both;
+}
+.tn-chapter.is-world { justify-content: flex-start; padding-top: 22vh; }
+.tn-chapter.is-out { animation: tn-card-out var(--d-card-out) var(--ease-std) both; }
+.tn-chapter-body {
+  width: fit-content;
+  max-width: 100%;
+  animation: tn-drift var(--hold, 3s) linear both;
+}
+.tn-chapter-numeral {
+  margin-bottom: var(--s2);
+  font: 500 calc(var(--t-card) * .6)/1 var(--jp);
+  color: var(--ink);
+}
+.tn-chapter-title {
+  margin: 0;
+  font: 500 var(--t-card)/1.05 var(--serif);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tn-chapter .tn-hair { margin: var(--s4) 0 var(--s3); }
+.tn-chapter-night {
+  font-size: var(--t-13);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+/* ---- damage, guard, parry --------------------------------------------- */
+
+.tn-vignette {
+  position: absolute; inset: 0; z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(145, 63, 51, 0) 38%, rgba(145, 63, 51, .34) 70%, rgba(8, 8, 8, .92) 100%);
+  transition: opacity var(--d-hover) var(--ease-std);
+}
+.tn-ring {
+  position: absolute; z-index: 4;
+  left: 0; right: 0; top: 50%;
+  margin: -48px auto 0;
+  width: 96px; height: 96px;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(.85);
+  transition: opacity var(--d-hover) var(--ease-std), transform var(--d-press) var(--ease-out);
+  pointer-events: none;
+}
+.tn-ring.is-on { opacity: 1; transform: none; }
+.tn-guard {
+  position: absolute; z-index: 4;
+  left: 0; right: 0; top: 50%;
+  margin: 64px auto 0;
+  width: 96px; height: 1px;
+  background: var(--ink-2);
+  opacity: 0;
+  transform: scaleX(.4);
+  transition: opacity var(--d-hover) var(--ease-std), transform var(--d-press) var(--ease-out);
+  pointer-events: none;
+}
+.tn-guard.is-on { opacity: 1; transform: none; }
+
+/* ---- cards: pause, death, victory ------------------------------------- */
+
+.tn-card {
+  position: absolute; inset: 0; z-index: 6;
+  display: grid; place-items: center;
+  animation: tn-fade-in var(--d-hud-in) var(--ease-std) both;
+}
+.tn-pause { background: var(--scrim); cursor: pointer; }
+.tn-card-body {
+  width: min(360px, calc(100% - var(--edge-x) * 2));
+  animation: tn-rise var(--d-title) var(--ease-std) both;
+}
+.tn-card-title {
+  margin: 0;
+  font: 500 var(--t-card)/1.05 var(--serif);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tn-card .tn-hair { margin: var(--s4) 0; }
+.tn-card-line {
+  margin: 0;
+  font-size: var(--t-13);
+  letter-spacing: var(--track-hint);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.tn-card-prompt { color: var(--ink); }
+.tn-card-actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s3); margin-top: var(--s6); }
+.temple-night-scene .tn-line { text-align: left; }
+
+.tn-controls {
+  border-collapse: collapse;
+  font-size: var(--t-13);
+  color: var(--ink-2);
+}
+.tn-controls th {
+  text-align: left;
+  font-weight: 400;
+  padding: 3px var(--s6) 3px 0;
+  width: 120px;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.tn-controls td { padding: 3px 0; vertical-align: baseline; }
+.tn-controls kbd { font-size: var(--t-12); }
+
+/* ---- touch fallback --------------------------------------------------- */
+
+.touch-controls { display: none; }
+
+/* ---- keyframes -------------------------------------------------------- */
+
+@keyframes tn-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tn-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes tn-card-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(12px); } }
+@keyframes tn-drift { from { transform: none; } to { transform: translateX(6px); } }
+@keyframes tn-draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes tn-pulse { 0% { opacity: .45; } 50% { opacity: 1; } 100% { opacity: .45; } }
+@keyframes tn-pulse-once { 0% { color: var(--ink-3); } 30% { color: var(--ink); } 100% { color: var(--ink-3); } }
+@keyframes tn-result {
+  0% { opacity: 0; transform: translateY(8px); }
+  15% { opacity: 1; transform: none; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---- responsive ------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  .temple-night-scene { --edge-x: 24px; --edge-y: 20px; --t-title: clamp(40px, 12vw, 64px); --t-card: 32px; }
+  .tn-hud-tr { width: 150px; }
+  .tn-hud-bl { width: 220px; }
+  .tn-controls th { width: 96px; }
+}
+@media (max-height: 650px) {
+  .temple-night-scene { --t-title: 56px; --t-card: 32px; }
+  .tn-controls th, .tn-controls td { padding: 1px 0; }
+  .tn-controls th { padding-right: var(--s6); }
+}
+@media (hover: none) {
+  .touch-controls { position: absolute; z-index: 5; display: flex; bottom: 104px; left: var(--edge-x); right: var(--edge-x); align-items: end; justify-content: space-between; }
+  .touch-controls button { background: rgba(8, 8, 8, .7); color: var(--ink); border: 1px solid var(--hair); min-width: 48px; min-height: 48px; touch-action: none; font-size: 18px; }
+  .touch-move { display: grid; grid-template-columns: repeat(3, 48px); gap: 5px; }
+  .touch-move button:first-child { grid-column: 2; }
+  .touch-move button:nth-child(2) { grid-column: 1; }
+}
+
+/* ---- reduced motion --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .temple-night-scene * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .tn-card-body, .tn-result, .tn-chapter, .tn-chapter-body, .tn-entry-above, .tn-title-name, .tn-title-sub, .tn-prompt { transform: none !important; }
+  .tn-result { animation: none; opacity: 1; }
+  .tn-entry.is-title[data-prompt="on"] .tn-prompt { animation: none; opacity: 1; }
+}

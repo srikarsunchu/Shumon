@@ -2400,6 +2400,15 @@ function updateWorld(dt) {
     m.visible = a > .006;
   });
   landscape?.update(clock, gameplay?.position);
+  /* Game hook: WORLD.grade = { hit, standoff } (0..1, driven by gameplay).
+     hit → a brief exposure dip and desaturation; standoff → a deeper
+     vignette. At 0 the grade is exactly the authored one. */
+  if (WORLD.grade && POST.comp) {
+    const g = WORLD.grade, u = POST.comp.uniforms, hit = sat(g.hit), so = sat(g.standoff);
+    u.uExp.value = .62 * (1 - .30 * hit);
+    u.uSat.value = 1.05 - .60 * hit;
+    u.uVig.value = 1 + .45 * so;
+  }
   updateLeaves(dt);
   updateWisps(dt);
 }
@@ -2501,6 +2510,7 @@ function dispose() {
 try {
   initGL();
   WORLD.uT = { value: 0 };
+  WORLD.grade = { hit: 0, standoff: 0 };   /* game hook: see updateWorld */
   buildRig();
   buildLights();
   buildShell();
@@ -2521,18 +2531,19 @@ try {
   buildMaple(73, 9.2, -19.0, .82);   buildMaple(74, -14.5, -17.5, 1.0);
   buildMaple(75, 16.5, -6.0, .88);
   WORLD.fg = []; // Flat foreground artwork is replaced by explorable geometry.
-  landscape = buildLandscape(scene, LOW);
+  /* Game hook: the authored sky plane only covers the view toward the hall,
+     so the landscape hangs its texture on a dome instead; the plane is hidden. */
+  landscape = buildLandscape(scene, LOW, WORLD.sky);
   WORLD.sky.visible = false;
   buildAtmosphere();
   buildLeafFall();
   buildWisps();
   if (createGameplay && WISP.mesh) WISP.mesh.visible = false;
   initPost();
-  gameplay = createGameplay?.({ scene, camera, canvas, wind: landscape.wind });
+  gameplay = createGameplay?.({ scene, camera, canvas, wind: landscape.wind, grade: WORLD.grade });
   WORLD.fg.forEach(m => m.layers.set(1));
-  if (WORLD.rain) WORLD.rain.layers.set(1);
-  if (WORLD.leaves) WORLD.leaves.mesh.layers.set(1);
-  WORLD.ripples.forEach(r => r.layers.set(1));
+  /* Game hook: rain, leaves and ripples stay in game mode — they are the
+     mood; only the cursor wisps are hidden (above). */
   if (WANT_SHADOW && WORLD.key) { WORLD.key.shadow.autoUpdate = true; WORLD.key.shadow.needsUpdate = true; }
   RIG.intro = 1;
   fadeIn = 1;

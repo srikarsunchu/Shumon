@@ -1,5 +1,5 @@
 {
-  "name": "temple-night",
+  "name": "shumon",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node tests/gameplay.mjs && node scripts/anim/check-clips.mjs && node tests/clips.mjs && node tests/body.mjs"
+    "test": "node tests/gameplay.mjs && node tests/combat.mjs && node scripts/anim/check-clips.mjs && node tests/clips.mjs && node tests/body.mjs"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "^0.20.0",

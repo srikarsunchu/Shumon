@@ -14,8 +14,10 @@ export async function createTemplePhysics(solids, start) {
     if(!vertices.every(Number.isFinite)) throw new Error(`Invalid collider: ${mesh.name} ${geometry.type}`);
     world.createCollider(RAPIER.ColliderDesc.trimesh(vertices,indices));
   }
-  // Low, broad boundary colliders retain the playable landscape.
-  for(const [x,z,hx,hz] of [[-58,-10,.5,72],[58,-10,.5,72],[0,48,58,.5],[0,-70,58,.5]])
+  // Invisible boundary colliders retain the playable landscape: |x| < 52,
+  // -66 < z < 42. Just outside them the ground climbs into the ring of trees
+  // and rock built by templeLandscape.js (PLAY there must match these).
+  for(const [x,z,hx,hz] of [[-52,-12,.5,54],[52,-12,.5,54],[0,42,52,.5],[0,-66,52,.5]])
     world.createCollider(RAPIER.ColliderDesc.cuboid(hx,20,hz).setTranslation(x,10,z));
   const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(start.x,start.y+.86,start.z));
   const capsule=world.createCollider(RAPIER.ColliderDesc.capsule(.55,.28),body);

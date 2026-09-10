@@ -13,7 +13,7 @@ const platform=new THREE.Mesh(new THREE.BoxGeometry(42,7,24),mat); platform.posi
 const wall=new THREE.Mesh(new THREE.BoxGeometry(1,5,100),mat); wall.position.set(10,2.5,0); scene.add(wall);
 const game=createTempleGameplay({scene,camera,canvas}); const player=scene.getObjectByName('Playable wanderer');
 await game.ready;
-let state; game.subscribe(s=>state=s); game.start(); game.setKey('KeyW',true);
+let state; game.subscribe(s=>state=s); game.start({practice:true}); game.setKey('KeyW',true);
 for(let i=0;i<60;i++) game.update(1/60);
 const release=player.position.clone(); game.setKey('KeyW',false);
 for(let i=0;i<12;i++) game.update(1/60);
@@ -45,7 +45,7 @@ async function cameraFixture() {
   await game.ready;
   game.update(1/60);
   assert(camera.position.z<8.8,'Camera stays in front of obstacle');
-  game.start(); game.setKey('KeyW',true);
+  game.start({practice:true}); game.setKey('KeyW',true);
   let last=camera.position.clone();
   for(let i=0;i<240;i++) {
     game.update(1/60);
@@ -80,7 +80,7 @@ async function clipFixture() {
   await game.ready; await game.bodyReady; await game.clipsReady;
   const player=scene.getObjectByName('Playable wanderer'), katana=player.getObjectByName('katana'), hilt=player.getObjectByName('sheathedHilt');
   const rightArm=katana.parent.parent.parent;      /* hand ← forearm ← arm */
-  let state; game.subscribe(s=>state=s); game.start();
+  let state; game.subscribe(s=>state=s); game.start({practice:true});
   assert.equal(game.getState().body,'procedural'); assert.deepEqual(game.getState().clips.sort(),Object.keys(clips).sort());
   assert.equal(state.stance,'stone');
   const press=code=>{ for(const type of ['keydown','keyup']) { const e=new Event(type); e.code=code; window.dispatchEvent(e); } };

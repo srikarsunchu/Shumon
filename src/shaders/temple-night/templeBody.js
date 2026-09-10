@@ -79,9 +79,14 @@ async function loadMeta(url) {
 
 const depthOf = o => { let d = 0; while (o.parent) { d++; o = o.parent; } return d; };
 
+/* opt: { url, meta, height, gltf, bones, follow, faceZ, face } — every call
+   loads its own copy of the body (the browser caches the fetch; the parsed
+   scene is never shared between figures, so each skin has its own bones).
+   face: false skips the painted stubble and scar: the gate's fighters wear
+   a mask over that part of the face and spare the canvas work. */
 export async function loadBody(samurai, opt) {
   opt = opt || {};
-  const { url = '/assets/samurai/body.glb', meta = '/assets/samurai/body.json', height = 1.74 } = opt;
+  const { url = '/assets/samurai/body.glb', meta = '/assets/samurai/body.json', height = 1.74, face = true } = opt;
   /* opt.gltf / opt.meta as objects let tests bind a synthetic skeleton without fetching */
   const [gltf, info] = await Promise.all([opt.gltf || new GLTFLoader().loadAsync(url), typeof meta === 'object' ? meta : loadMeta(meta)]);
   const root = gltf.scene;
@@ -231,7 +236,7 @@ export async function loadBody(samurai, opt) {
     setFaceTexture(c, skinMaterial);
     return true;
   }
-  try { paintFace(info.faceLandmarks || info.face || info.landmarks || null); } catch (error) { console.warn('Face overlay skipped.', error); }
+  if (face) try { paintFace(info.faceLandmarks || info.face || info.landmarks || null); } catch (error) { console.warn('Face overlay skipped.', error); }
 
   /* ---- per frame ---- */
   const boneWorld = new THREE.Quaternion(), mid = new THREE.Quaternion(), p = new THREE.Vector3();
@@ -259,5 +264,5 @@ export async function loadBody(samurai, opt) {
     faceTexture = null;
     samurai.setBodyMode('procedural');
   }
-  return { sync, dispose, skinnedMeshes, bones, setFaceTexture, scene: root, rest, meta: info, scale };
+  return { sync, dispose, skinnedMeshes, bones, setFaceTexture, scene: root, rest, meta: info, scale, face: !!face };
 }
